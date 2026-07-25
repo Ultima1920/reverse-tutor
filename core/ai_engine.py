@@ -16,7 +16,7 @@ if api_key:
 
 # Initialize the Gemini model, requesting JSON output as per our persona prompt
 model = genai.GenerativeModel(
-    "gemini-1.5-flash",
+    "gemini-3.1-flash-lite",
     generation_config={"response_mime_type": "application/json"}
 )
 
