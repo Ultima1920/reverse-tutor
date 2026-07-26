@@ -1,4 +1,4 @@
-# 🎓 Reverse Tutor AI
+# 🎓 Reverse Tutor AI 1.1.0
 
 > *"The best way to learn is to teach."* — Richard Feynman
 
