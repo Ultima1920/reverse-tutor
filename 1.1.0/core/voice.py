@@ -14,8 +14,53 @@ Voice is an OPTIONAL enhancement. The app must still work without it.
 """
 
 import logging
+import os
+import io
 
 logger = logging.getLogger(__name__)
+
+
+# ---------------------------------------------------------------------------
+# Audio format conversion helper
+# ---------------------------------------------------------------------------
+
+def _convert_to_wav(audio_bytes: bytes) -> bytes:
+    """Convert audio bytes (webm, ogg, mp4, etc.) to standard WAV PCM format.
+
+    Browser MediaRecorder (st.audio_input) typically produces audio/webm or
+    audio/ogg data, whereas SpeechRecognition requires PCM WAV.
+    """
+    if not audio_bytes:
+        return audio_bytes
+
+    # 1. Try reading directly if it's already a valid WAV file
+    try:
+        import wave
+        with wave.open(io.BytesIO(audio_bytes), "rb") as wf:
+            if wf.getnchannels() > 0:
+                return audio_bytes
+    except Exception:
+        pass
+
+    # 2. Convert using pydub and imageio_ffmpeg
+    try:
+        import imageio_ffmpeg
+        import pydub
+
+        ffmpeg_exe = imageio_ffmpeg.get_ffmpeg_exe()
+        ffmpeg_dir = os.path.dirname(ffmpeg_exe)
+        if ffmpeg_dir not in os.environ.get("PATH", ""):
+            os.environ["PATH"] = os.environ.get("PATH", "") + os.path.pathsep + ffmpeg_dir
+
+        pydub.AudioSegment.converter = ffmpeg_exe
+
+        audio_segment = pydub.AudioSegment.from_file(io.BytesIO(audio_bytes))
+        out_buf = io.BytesIO()
+        audio_segment.export(out_buf, format="wav")
+        return out_buf.getvalue()
+    except Exception as exc:
+        logger.warning("Audio conversion to WAV failed: %s", exc)
+        return audio_bytes
 
 
 # ---------------------------------------------------------------------------
@@ -23,26 +68,30 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 
 def transcribe_audio(audio_bytes: bytes) -> str | None:
-    """Convert raw audio bytes to text using SpeechRecognition.
+    """Convert audio bytes to text using SpeechRecognition.
 
     Uses the Google Web Speech API (free tier, no key needed for light use).
-    Returns None if transcription fails for any reason — callers should
-    fall back to text input rather than raising an error to the user.
+    Converts webm/ogg browser recordings to WAV automatically.
 
     Args:
-        audio_bytes: Raw audio data (WAV format preferred).
+        audio_bytes: Raw audio data (WAV, WEBM, OGG, etc.).
 
     Returns:
         Transcribed text string, or None on any failure.
     """
+    if not audio_bytes:
+        return None
+
     try:
         import speech_recognition as sr  # type: ignore
-        import io
+
+        # Convert webm/ogg browser recording to WAV PCM first
+        wav_bytes = _convert_to_wav(audio_bytes)
 
         recognizer = sr.Recognizer()
 
-        # Wrap raw bytes in a file-like object for AudioFile
-        audio_file = io.BytesIO(audio_bytes)
+        # Wrap WAV bytes in a file-like object for AudioFile
+        audio_file = io.BytesIO(wav_bytes)
         with sr.AudioFile(audio_file) as source:
             audio_data = recognizer.record(source)
 
