@@ -3,7 +3,7 @@ pages/1_Explain_Mode.py — Core Feynman / Reverse Tutoring experience.
  
 Flow:
 1. Student picks a topic and rates their confidence (1-10)
-2. Student types or speaks their explanation
+2. Student types their explanation
 3. AI plays a confused peer, asking one probing question per turn
 4. After 4 student turns OR 2 consecutive gap_flag=False, a diagnostic report
    is generated and displayed with a colour-coded clarity score card
@@ -21,20 +21,11 @@ st.set_page_config(
     layout="wide",
 )
  
-from core import db, ai_engine, persona, calibration, misconceptions, voice
+from core import db, ai_engine, persona, calibration, misconceptions
  
 # ---------------------------------------------------------------------------
 # Constants
 # ---------------------------------------------------------------------------
- 
-PRESET_TOPICS = [
-    "Photosynthesis",
-    "Fractions",
-    "Gravity",
-    "Newton's Third Law",
-    "Supply and Demand",
-    "Custom topic…",
-]
  
 # Number of student turns before auto-generating the report
 MAX_TURNS = 4
@@ -92,27 +83,13 @@ if not st.session_state["em_started"]:
     col_setup, col_info = st.columns([2, 1])
  
     with col_setup:
-        # Topic selection
-        default_topic_idx = 0
-        if _preloaded_topic and _preloaded_topic in PRESET_TOPICS:
-            default_topic_idx = PRESET_TOPICS.index(_preloaded_topic)
- 
-        topic_choice = st.selectbox(
-            "📖 Choose a topic",
-            PRESET_TOPICS,
-            index=default_topic_idx,
-            key="em_topic_select",
-        )
- 
-        custom_topic = ""
-        if topic_choice == "Custom topic…":
-            custom_topic = st.text_input(
-                "Enter your custom topic:",
-                value=_preloaded_topic if _preloaded_topic not in PRESET_TOPICS else "",
-                key="em_custom_topic",
-            )
- 
-        final_topic = custom_topic.strip() if topic_choice == "Custom topic…" else topic_choice
+        # Topic input — any subject, not limited to a preset list
+        final_topic = st.text_input(
+            "📖 What topic do you want to teach Alex?",
+            value=_preloaded_topic or "",
+            placeholder="e.g. Photosynthesis, the French Revolution, Big-O notation, offside rule in football…",
+            key="em_topic_input",
+        ).strip()
  
         # Confidence slider
         confidence = st.slider(
@@ -121,14 +98,6 @@ if not st.session_state["em_started"]:
             max_value=10,
             value=5,
             key="em_confidence_slider",
-        )
- 
-        # Input mode toggle
-        input_mode = st.radio(
-            "✏️ How will you type your explanation?",
-            ["⌨️ Type", "🎤 Voice"],
-            horizontal=True,
-            key="em_input_mode",
         )
  
         # Start button
@@ -168,16 +137,15 @@ if not st.session_state["em_started"]:
                     "em_system_prompt": sys_prompt,
                     "em_turn_count": 0,
                     "em_report": None,
-                    "voice_text": "",
                 })
                 st.rerun()
  
     with col_info:
         st.info(
             "**How it works:**\n\n"
-            "1. Choose a topic you've been studying\n"
+            "1. Type any topic — any subject, any level\n"
             "2. Rate your own confidence\n"
-            "3. Type (or speak) your explanation\n"
+            "3. Type your explanation\n"
             "4. Alex will ask one question per turn\n"
             "5. After 4 turns you get a diagnostic report\n\n"
             "The AI never lectures you — it only asks questions."
@@ -281,46 +249,14 @@ else:
     # INPUT AREA (only shown while session is active)
     # -----------------------------------------------------------------------
     elif turn_count < MAX_TURNS:
-        input_mode = st.session_state.get("em_input_mode", "⌨️ Type")
         student_text = ""
  
-        if "🎤" in input_mode:
-            st.markdown("🎤 **Voice input** — record your explanation:")
-            audio_val = st.audio_input("Record your explanation", key=f"em_audio_{turn_count}")
- 
-            if audio_val is not None:
-                with st.spinner("Transcribing your audio…"):
-                    transcribed = voice.transcribe_audio(audio_val.getvalue())
- 
-                if transcribed:
-                    st.session_state["voice_text"] = transcribed
-                    st.success("Voice recognised successfully.")
-                    st.write(transcribed)
-                else:
-                    st.warning("Couldn't transcribe that. Please type your explanation instead:")
-                    fallback = st.text_area(
-                        "Your explanation (fallback text):",
-                        key=f"em_text_fallback_{turn_count}",
-                        height=120,
-                    )
-                    st.session_state["voice_text"] = fallback
- 
-            # Submit button for voice path
-            if st.button("Send ▶️", key=f"em_send_voice_{turn_count}"):
-                candidate = st.session_state.get("voice_text", "").strip()
-                if not candidate:
-                    st.warning("Please record or type something first.")
-                else:
-                    student_text = candidate
-                    st.session_state["voice_text"] = ""
-        else:
-            # Text input path
-            chat_val = st.chat_input(
-                placeholder="Explain the concept here… (press Enter to send)",
-                key=f"em_chat_input_{turn_count}",
-            )
-            if chat_val:
-                student_text = chat_val.strip()
+        chat_val = st.chat_input(
+            placeholder="Explain the concept here… (press Enter to send)",
+            key=f"em_chat_input_{turn_count}",
+        )
+        if chat_val:
+            student_text = chat_val.strip()
  
         # Process the student's input
         if student_text:
@@ -395,12 +331,6 @@ else:
                 st.session_state["em_report"] = report_data
  
             st.rerun()
- 
-    # Speak the last AI reply button (shown outside input block)
-    if st.session_state["em_history"] and st.session_state["em_history"][-1]["role"] == "assistant":
-        last_reply = st.session_state["em_history"][-1]["content"]
-        if st.button("🔊 Hear Alex's last reply", key="em_speak"):
-            voice.speak_reply(last_reply)
  
     # Reset button always visible during session
     st.divider()
