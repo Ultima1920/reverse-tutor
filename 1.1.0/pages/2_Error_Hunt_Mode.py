@@ -18,6 +18,10 @@ st.set_page_config(
     layout="wide",
 )
  
+from core.ui import inject_base_css, render_misconception_block, render_topic_chip
+ 
+inject_base_css()
+ 
 from core import ai_engine
  
 # ---------------------------------------------------------------------------
@@ -36,9 +40,10 @@ if "eh_guess" not in st.session_state:
 # ---------------------------------------------------------------------------
 # Page header
 # ---------------------------------------------------------------------------
-st.title("🔍 Error Hunt Mode")
+st.markdown('<div style="font-family:\'IBM Plex Mono\',monospace;color:var(--chalk-yellow);font-size:0.8rem;letter-spacing:2px;text-transform:uppercase;">Error Hunt Mode</div>', unsafe_allow_html=True)
+st.title("🔍 Spot the mistake")
 st.markdown(
-    "The AI writes a **subtly wrong explanation** with one planted factual error. "
+    "Alex writes a **subtly wrong explanation** with one planted factual error. "
     "Your job: spot the mistake. Great for sharpening critical thinking."
 )
 st.divider()
@@ -89,9 +94,19 @@ with col_right:
 # ---------------------------------------------------------------------------
 if st.session_state["eh_explanation"]:
     st.divider()
-    st.subheader(f"📝 Explanation: {st.session_state['eh_topic']}")
     st.markdown(
-        f"> {st.session_state['eh_explanation']}",
+        f"**Explanation:** {render_topic_chip(st.session_state['eh_topic'])}",
+        unsafe_allow_html=True,
+    )
+    st.markdown(
+        f"""
+        <div style="background: var(--bg-panel); border: 2px dashed rgba(168,191,176,0.4);
+                    border-radius: 12px; padding: 1.2rem 1.4rem; margin-top: 0.6rem;
+                    color: var(--chalk-white); font-size: 1.02rem; line-height: 1.6;">
+            {st.session_state['eh_explanation']}
+        </div>
+        """,
+        unsafe_allow_html=True,
     )
  
     # Only show the guess input if we haven't revealed yet
@@ -131,15 +146,10 @@ if st.session_state["eh_result"] is not None:
     else:
         st.error("❌ **Not quite.** That wasn't the main planted error.")
  
-    col_err, col_fix = st.columns(2)
- 
-    with col_err:
-        st.markdown("**🔴 The actual planted error:**")
-        st.error(result.get("actual_error", "Unknown"))
- 
-    with col_fix:
-        st.markdown("**✅ The correct explanation:**")
-        st.success(result.get("explanation", "Unknown"))
+    render_misconception_block(
+        misconception=result.get("actual_error", "Unknown"),
+        correction=result.get("explanation", "Unknown"),
+    )
  
     st.divider()
     if st.button("🔄 Try another topic", key="eh_reset"):
