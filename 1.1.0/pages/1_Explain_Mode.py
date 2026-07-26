@@ -280,20 +280,38 @@ else:
         if "🎤" in input_mode:
             st.markdown("🎤 **Voice input** — record your explanation:")
             audio_val = st.audio_input("Record your explanation", key=f"em_audio_{turn_count}")
+
+            last_audio_key = f"em_last_audio_bytes_{turn_count}"
+            text_key = f"em_voice_text_{turn_count}"
+
+            if text_key not in st.session_state:
+                st.session_state[text_key] = ""
+
             if audio_val is not None:
-                with st.spinner("Transcribing your audio…"):
-                    student_text = voice.transcribe_audio(audio_val.getvalue())
-                if student_text is None:
-                    st.warning("Couldn't transcribe that. Please type your explanation instead:")
-                    student_text = st.text_area(
-                        "Your explanation (fallback text):",
-                        key=f"em_text_fallback_{turn_count}",
-                        height=120,
-                    )
+                audio_bytes = audio_val.getvalue()
+                if st.session_state.get(last_audio_key) != audio_bytes:
+                    st.session_state[last_audio_key] = audio_bytes
+                    with st.spinner("Transcribing your audio…"):
+                        transcribed = voice.transcribe_audio(audio_bytes)
+                    if transcribed:
+                        st.session_state[text_key] = transcribed
+                        st.success("✨ Transcribed! Review or edit your explanation below before sending.")
+                    else:
+                        st.warning("⚠️ Couldn't transcribe audio clearly. Please type or edit your explanation below:")
+
+            # Render text area bound to session_state text_key
+            student_text = st.text_area(
+                "Your explanation (transcribed from voice — feel free to edit):",
+                key=text_key,
+                height=120,
+                placeholder="Record audio above or type your explanation here…",
+            )
+
             # Submit button for voice path
-            if st.button("Send ▶️", key=f"em_send_voice_{turn_count}"):
-                if not student_text or not student_text.strip():
-                    st.warning("Please record or type something first.")
+            if st.button("Send ▶️", key=f"em_send_voice_{turn_count}", type="primary"):
+                student_text = st.session_state.get(text_key, "").strip()
+                if not student_text:
+                    st.warning("Please record audio or type an explanation first.")
                     student_text = None
         else:
             # Text input path
