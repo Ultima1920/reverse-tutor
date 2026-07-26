@@ -274,12 +274,18 @@ else:
     elif turn_count < MAX_TURNS:
         student_text = ""
  
-        chat_val = st.chat_input(
-            placeholder="Explain the concept here… (press Enter to send)",
-            key=f"em_chat_input_{turn_count}",
+        st.markdown("### ✍️ Your turn — explain it to Alex")
+        typed = st.text_area(
+            "Type your explanation here:",
+            key=f"em_text_area_{turn_count}",
+            height=140,
+            placeholder="Explain the concept in your own words…",
         )
-        if chat_val:
-            student_text = chat_val.strip()
+        if st.button("Send ▶️", key=f"em_send_btn_{turn_count}", type="primary"):
+            if not typed.strip():
+                st.warning("Please type something before sending.")
+            else:
+                student_text = typed.strip()
  
         # Process the student's input
         if student_text:
