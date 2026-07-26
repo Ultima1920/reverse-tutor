@@ -58,6 +58,70 @@ if "em_difficulty" not in st.session_state:
     st.session_state["em_difficulty"] = "standard"
 if "em_turn_count" not in st.session_state:
     st.session_state["em_turn_count"] = 0
+if "em_report" not in st.session_s"""
+pages/1_Explain_Mode.py — Core Feynman / Reverse Tutoring experience.
+ 
+Flow:
+1. Student picks a topic and rates their confidence (1-10)
+2. Student types their explanation
+3. AI plays a confused peer, asking one probing question per turn
+4. After 4 student turns OR 2 consecutive gap_flag=False, a diagnostic report
+   is generated and displayed with a colour-coded clarity score card
+"""
+ 
+import streamlit as st
+import os
+from dotenv import load_dotenv
+ 
+load_dotenv()
+ 
+st.set_page_config(
+    page_title="Explain Mode — Reverse Tutor AI",
+    page_icon="🗣️",
+    layout="wide",
+)
+ 
+from core.ui import inject_base_css, render_turn_dots, render_score_badge, render_misconception_block, render_topic_chip
+ 
+inject_base_css()
+ 
+from core import db, ai_engine, persona, calibration, misconceptions
+ 
+# ---------------------------------------------------------------------------
+# Constants
+# ---------------------------------------------------------------------------
+ 
+# Number of student turns before auto-generating the report
+MAX_TURNS = 4
+# Number of consecutive gap_flag=False before early report generation
+EARLY_STOP_CONSECUTIVE = 2
+ 
+ 
+# ---------------------------------------------------------------------------
+# Session state helpers
+# ---------------------------------------------------------------------------
+ 
+def _reset_session():
+    """Clear all explain-mode session state to start fresh."""
+    for key in [
+        "em_started", "em_session_id", "em_student_id", "em_topic",
+        "em_confidence", "em_history", "em_gap_flags", "em_difficulty",
+        "em_report", "em_system_prompt", "em_turn_count",
+    ]:
+        st.session_state.pop(key, None)
+ 
+ 
+# Initialise defaults if not already present
+if "em_started" not in st.session_state:
+    st.session_state["em_started"] = False
+if "em_history" not in st.session_state:
+    st.session_state["em_history"] = []
+if "em_gap_flags" not in st.session_state:
+    st.session_state["em_gap_flags"] = []
+if "em_difficulty" not in st.session_state:
+    st.session_state["em_difficulty"] = "standard"
+if "em_turn_count" not in st.session_state:
+    st.session_state["em_turn_count"] = 0
 if "em_report" not in st.session_state:
     st.session_state["em_report"] = None
  
@@ -67,7 +131,8 @@ _preloaded_topic = st.session_state.pop("reprobe_topic", None)
 # ---------------------------------------------------------------------------
 # Page header
 # ---------------------------------------------------------------------------
-st.title("🗣️ Explain Mode")
+st.markdown('<div class="tagline" style="font-family:\'IBM Plex Mono\',monospace;color:var(--chalk-yellow);font-size:0.8rem;letter-spacing:2px;text-transform:uppercase;">Explain Mode</div>', unsafe_allow_html=True)
+st.title("🗣️ Teach it to Alex")
 st.markdown(
     "Explain a concept to **Alex** (your confused AI peer). "
     "Alex will ask one probing question per turn. "
@@ -184,11 +249,16 @@ else:
     report = st.session_state["em_report"]
  
     # Session header
-    st.markdown(
-        f"**Topic:** {topic} &nbsp;|&nbsp; "
-        f"**Confidence (self-rated):** {st.session_state['em_confidence']}/10 &nbsp;|&nbsp; "
-        f"**Turn:** {turn_count}/{MAX_TURNS}"
-    )
+    col_topic, col_conf, col_turns = st.columns([2, 1, 1])
+    with col_topic:
+        st.markdown(f"**Topic**<br>{render_topic_chip(topic)}", unsafe_allow_html=True)
+    with col_conf:
+        st.markdown(f"**Self-rated confidence**<br>{st.session_state['em_confidence']}/10", unsafe_allow_html=True)
+    with col_turns:
+        st.markdown(f"**Turn {turn_count}/{MAX_TURNS}**", unsafe_allow_html=True)
+        render_turn_dots(turn_count, MAX_TURNS)
+ 
+    st.divider()
  
     # -----------------------------------------------------------------------
     # Render chat history
@@ -208,26 +278,18 @@ else:
         st.subheader("📋 Diagnostic Report")
  
         score = report.get("clarity_score", 5)
-        # Color-code the score
         if score >= 7:
-            score_color = "🟢"
             score_label = "Strong understanding"
         elif score >= 4:
-            score_color = "🟡"
             score_label = "Partial understanding"
         else:
-            score_color = "🔴"
             score_label = "Significant gaps"
  
         col_score, col_details = st.columns([1, 2])
  
         with col_score:
-            st.metric(
-                label="Clarity Score",
-                value=f"{score_color} {score}/10",
-                help=score_label,
-            )
-            st.caption(score_label)
+            render_score_badge(score, score_label)
+            st.write("")
  
             # Calibration gap
             cal = calibration.compute_calibration_gap(
@@ -248,15 +310,11 @@ else:
                 for pt in correct_points:
                     st.markdown(f"- {pt}")
  
-            # Misconception
+            # Misconception (chalk red-pen style)
             misconception = report.get("misconception_found")
             correction = report.get("correct_explanation")
             if misconception:
-                st.markdown("**❌ Misconception found:**")
-                st.error(misconception)
-                if correction:
-                    st.markdown("**✅ Correct explanation:**")
-                    st.success(correction)
+                render_misconception_block(misconception, correction)
  
             # Weak subtopic
             weak = report.get("weak_subtopic")
