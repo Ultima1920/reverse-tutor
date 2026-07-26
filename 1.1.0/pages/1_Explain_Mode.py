@@ -105,24 +105,47 @@ if not st.session_state["em_started"]:
             if not final_topic:
                 st.error("Please enter a topic before starting.")
             else:
-                # Fetch known misconceptions for this topic to guide the AI
-                known_mc = misconceptions.get_misconceptions_for_topic(final_topic)
+                # Fetch known misconceptions for this topic to guide the AI.
+                # Wrapped in try/except because topics outside the seeded
+                # database (e.g. "cricket") have zero rows, and we don't want
+                # that to silently kill the session before it starts.
+                try:
+                    known_mc = misconceptions.get_misconceptions_for_topic(final_topic)
+                    if known_mc is None:
+                        known_mc = []
+                except Exception as exc:
+                    st.warning(
+                        f"⚠️ Couldn't load pre-seeded misconceptions for '{final_topic}' "
+                        f"(this is fine for new topics) — continuing without them. Details: {exc}"
+                    )
+                    known_mc = []
  
                 # Build the system prompt with topic + difficulty + known misconceptions
-                sys_prompt = persona.get_system_prompt(
-                    topic=final_topic,
-                    known_misconceptions=known_mc,
-                    difficulty="standard",
-                )
+                try:
+                    sys_prompt = persona.get_system_prompt(
+                        topic=final_topic,
+                        known_misconceptions=known_mc,
+                        difficulty="standard",
+                    )
+                except Exception as exc:
+                    st.error(
+                        f"❌ Could not build the AI persona prompt for '{final_topic}'. "
+                        f"Details: {exc}"
+                    )
+                    st.stop()
  
                 # Create DB records
-                student_id = db.get_or_create_default_student()
-                session_id = db.create_session(
-                    student_id=student_id,
-                    topic=final_topic,
-                    mode="explain",
-                    self_rated_confidence=confidence,
-                )
+                try:
+                    student_id = db.get_or_create_default_student()
+                    session_id = db.create_session(
+                        student_id=student_id,
+                        topic=final_topic,
+                        mode="explain",
+                        self_rated_confidence=confidence,
+                    )
+                except Exception as exc:
+                    st.error(f"❌ Could not create a session in the database. Details: {exc}")
+                    st.stop()
  
                 # Store in session state
                 st.session_state.update({
@@ -266,19 +289,34 @@ else:
             st.session_state["em_history"].append({"role": "user", "content": student_msg})
  
             # Rebuild system prompt with updated difficulty
-            known_mc = misconceptions.get_misconceptions_for_topic(topic)
-            sys_prompt = persona.get_system_prompt(
-                topic=topic,
-                known_misconceptions=known_mc,
-                difficulty=st.session_state["em_difficulty"],
-            )
+            try:
+                known_mc = misconceptions.get_misconceptions_for_topic(topic)
+                if known_mc is None:
+                    known_mc = []
+            except Exception as exc:
+                st.warning(f"⚠️ Couldn't refresh misconceptions for '{topic}': {exc} — continuing without them.")
+                known_mc = []
+ 
+            try:
+                sys_prompt = persona.get_system_prompt(
+                    topic=topic,
+                    known_misconceptions=known_mc,
+                    difficulty=st.session_state["em_difficulty"],
+                )
+            except Exception as exc:
+                st.error(f"❌ Could not build the AI persona prompt. Details: {exc}")
+                st.stop()
  
             # Call the AI
-            with st.spinner("Alex is thinking…"):
-                result = ai_engine.get_peer_reply(
-                    system_prompt=sys_prompt,
-                    conversation_history=st.session_state["em_history"],
-                )
+            try:
+                with st.spinner("Alex is thinking…"):
+                    result = ai_engine.get_peer_reply(
+                        system_prompt=sys_prompt,
+                        conversation_history=st.session_state["em_history"],
+                    )
+            except Exception as exc:
+                st.error(f"❌ The AI call failed unexpectedly. Details: {exc}")
+                st.stop()
  
             peer_reply = result.get("peer_reply", "")
             gap_flag = result.get("internal_gap_flag", True)
