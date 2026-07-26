@@ -12,6 +12,10 @@ import os
 import streamlit as st
 from dotenv import load_dotenv
  
+from core.ui import inject_base_css, render_hero
+ 
+load_dotenv()
+ 
 # ---------------------------------------------------------------------------
 # Page configuration — must be the very first Streamlit call
 # ---------------------------------------------------------------------------
@@ -22,10 +26,7 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
  
-# ---------------------------------------------------------------------------
-# Load environment variables
-# ---------------------------------------------------------------------------
-load_dotenv()  # Reads from .env in the project root
+inject_base_css()
  
 # ---------------------------------------------------------------------------
 # Database initialisation (once per session)
@@ -50,59 +51,66 @@ if not api_key:
         "1. Copy `.env.example` → `.env`\n"
         "2. Paste your free Gemini API key from [Google AI Studio](https://aistudio.google.com)\n"
         "3. Restart the Streamlit app\n\n"
-        "The Dashboard and Misconception Library work without a key.",
+        "The Dashboard works without a key.",
         icon="⚠️",
     )
  
 # ---------------------------------------------------------------------------
-# Home page content
+# Hero
 # ---------------------------------------------------------------------------
-st.title("🎓 Reverse Tutor AI")
-st.markdown(
-    """
-    > *"The best way to learn is to teach."* — Richard Feynman
- 
-    **Reverse Tutor AI** flips the classroom. Instead of an AI explaining things *to* you,
-    *you* explain the concept to the AI — which plays a **curious, confused peer student**
-    who asks pointed follow-up questions that expose exactly where your understanding breaks down.
- 
-    After a short conversation, you get a **diagnostic report** with a clarity score (1–10)
-    and a precise breakdown of your misconceptions.
- 
-    This is the **Feynman Technique**, made rigorous and data-driven.
-    """
+render_hero(
+    tagline="The Feynman Technique, made rigorous",
+    title="🎓 Reverse Tutor AI",
+    subtitle=(
+        "You teach. Alex — your confused AI peer — asks the questions. "
+        "Explain a concept, get caught on your gaps, and walk away with a "
+        "diagnostic report on exactly what you understood and what you didn't."
+    ),
 )
  
 st.divider()
  
-# Mode overview cards
+# ---------------------------------------------------------------------------
+# Mode selection — index cards
+# ---------------------------------------------------------------------------
+st.markdown("#### Pick a mode")
+ 
 col1, col2, col3 = st.columns(3)
  
 with col1:
-    st.markdown("### 🗣️ Explain Mode")
     st.markdown(
-        "You explain a concept. The AI plays a confused peer who asks one "
-        "probing question per turn. Get a diagnostic report after 4 turns."
+        """<div class="index-card">
+            <h3>🗣️ Explain Mode</h3>
+            <p>You explain a concept. Alex plays a confused peer who asks one
+            probing question per turn. Get a diagnostic report after 4 turns.</p>
+        </div>""",
+        unsafe_allow_html=True,
     )
-    if st.button("Go to Explain Mode →", key="home_explain"):
+    if st.button("Enter Explain Mode →", key="home_explain", type="primary", use_container_width=True):
         st.switch_page("pages/1_Explain_Mode.py")
  
 with col2:
-    st.markdown("### 🔍 Error Hunt Mode")
     st.markdown(
-        "The AI writes a subtly wrong explanation. You find the planted "
-        "factual error. Great for sharpening critical reading skills."
+        """<div class="index-card">
+            <h3>🔍 Error Hunt Mode</h3>
+            <p>Alex writes a subtly wrong explanation. You find the planted
+            factual error. Sharpens critical reading fast.</p>
+        </div>""",
+        unsafe_allow_html=True,
     )
-    if st.button("Go to Error Hunt →", key="home_error"):
+    if st.button("Enter Error Hunt →", key="home_error", type="primary", use_container_width=True):
         st.switch_page("pages/2_Error_Hunt_Mode.py")
  
 with col3:
-    st.markdown("### 📊 Dashboard")
     st.markdown(
-        "See all your past sessions. Track clarity scores over time. "
-        "Spot your recurring weak concepts and revisit them."
+        """<div class="index-card">
+            <h3>📊 Dashboard</h3>
+            <p>Review past sessions, track clarity scores over time, and
+            spot the concepts you keep getting wrong.</p>
+        </div>""",
+        unsafe_allow_html=True,
     )
-    if st.button("Go to Dashboard →", key="home_dashboard"):
+    if st.button("Open Dashboard →", key="home_dashboard", type="primary", use_container_width=True):
         st.switch_page("pages/3_Dashboard.py")
  
 st.divider()
@@ -125,4 +133,3 @@ with st.sidebar:
         st.success("✅ Gemini API key loaded")
     else:
         st.error("❌ No API key — add to .env")
- 
