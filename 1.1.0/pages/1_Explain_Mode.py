@@ -168,6 +168,7 @@ if not st.session_state["em_started"]:
                     "em_system_prompt": sys_prompt,
                     "em_turn_count": 0,
                     "em_report": None,
+                    "voice_text": "",
                 })
                 st.rerun()
 
@@ -283,19 +284,26 @@ else:
             if audio_val is not None:
                 with st.spinner("Transcribing your audio…"):
                     student_text = voice.transcribe_audio(audio_val.getvalue())
-                if student_text is None:
-                    st.warning("Couldn't transcribe that. Please type your explanation instead:")
-                    student_text = st.text_area(
+                if student_text :
+                   st.session_state["voice_text"] = student_text
+                   st.success("Voice recognised successfully.")
+                   st.write(student_text)
+                else :
+                   st.warning("Couldn't transcribe that. Please type your explanation instead:")
+                   student_text = st.text_area(
                         "Your explanation (fallback text):",
                         key=f"em_text_fallback_{turn_count}",
                         height=120,
                     )
             # Submit button for voice path
-            if st.button("Send ▶️", key=f"em_send_voice_{turn_count}"):
-                if not student_text or not student_text.strip():
-                    st.warning("Please record or type something first.")
-                    student_text = None
-        else:
+      if st.button("Send ▶️", key=f"em_send_voice_{turn_count}"):
+         student_text = st.session_state.get("voice_text", "").strip()
+         
+         if not student_text :
+            st.warning("Please record or type something first.")
+         else: 
+            st.session_state["voice_text"] = ""
+      else:
             # Text input path
             student_text = st.chat_input(
                 placeholder="Explain the concept here… (press Enter to send)",
@@ -303,7 +311,9 @@ else:
             )
 
         # Process the student's input
-        if student_text and student_text.strip():
+        student_text = student_text.strip() if student_text else ""
+         if student_text:
+            
             student_msg = student_text.strip()
 
             # Append student message to history
