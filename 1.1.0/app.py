@@ -76,7 +76,7 @@ st.markdown(
 st.divider()
  
 # Mode overview cards
-col1, col2, col3, col4 = st.columns(4)
+col1, col2, col3 = st.columns(3)
  
 with col1:
     st.markdown("### 🗣️ Explain Mode")
@@ -105,15 +105,6 @@ with col3:
     if st.button("Go to Dashboard →", key="home_dashboard"):
         st.switch_page("pages/3_Dashboard.py")
  
-with col4:
-    st.markdown("### 📚 Misconception Library")
-    st.markdown(
-        "Browse a curated list of common misconceptions by topic. "
-        "Understand exactly where students typically go wrong."
-    )
-    if st.button("Go to Library →", key="home_library"):
-        st.switch_page("pages/4_Misconception_Library.py")
- 
 st.divider()
 st.caption(
     "Built with Google Gemini free tier · SQLite · Streamlit — "
@@ -134,3 +125,4 @@ with st.sidebar:
         st.success("✅ Gemini API key loaded")
     else:
         st.error("❌ No API key — add to .env")
+ 
