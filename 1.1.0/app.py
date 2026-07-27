@@ -43,67 +43,7 @@ if "db_initialized" not in st.session_state:
 # SIDEBAR
 # ==========================================================
 
-with st.sidebar:
-
-    st.image(
-        "https://img.icons8.com/fluency/96/artificial-intelligence.png",
-        width=70,
-    )
-
-    st.markdown("## Reverse Tutor AI")
-
-    st.caption("Teach to Learn")
-
-    st.divider()
-
-    st.markdown("### Navigation")
-
-    st.page_link(
-        "app.py",
-        label="Home",
-        icon="🏠",
-    )
-
-    st.page_link(
-        "pages/1_Explain_Mode.py",
-        label="Explain Mode",
-        icon="🧠",
-    )
-
-    st.page_link(
-        "pages/2_Error_Hunt_Mode.py",
-        label="Error Hunt",
-        icon="🔍",
-    )
-
-    st.page_link(
-        "pages/3_Dashboard.py",
-        label="Dashboard",
-        icon="📊",
-    )
-
-    st.divider()
-
-    st.markdown("### System Status")
-
-    if os.getenv("GEMINI_API_KEY"):
-        render_info_card(
-            "Gemini Connected",
-            "AI services are available.",
-            "success",
-        )
-    else:
-        render_info_card(
-            "Gemini Missing",
-            "Add GEMINI_API_KEY to enable AI.",
-            "danger",
-        )
-
-    render_info_card(
-        "Database Ready",
-        "SQLite initialized successfully.",
-        "info",
-    )
+render_sidebar()
 
 # ==========================================================
 # HERO
