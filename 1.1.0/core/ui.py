@@ -8,6 +8,7 @@ from __future__ import annotations
 import streamlit as st
 from html import escape
 import textwrap
+import os
 
 # ==========================================================
 # THEME COLORS
