@@ -1,6 +1,6 @@
 """
 pages/1_Explain_Mode.py — Core Feynman / Reverse Tutoring experience.
- 
+
 Flow:
 1. Student picks a topic and rates their confidence (1-10)
 2. Student types their explanation
@@ -8,99 +8,39 @@ Flow:
 4. After 4 student turns OR 2 consecutive gap_flag=False, a diagnostic report
    is generated and displayed with a colour-coded clarity score card
 """
- 
+
 import streamlit as st
 import os
 from dotenv import load_dotenv
- 
+
 load_dotenv()
- 
+
 st.set_page_config(
     page_title="Explain Mode — Reverse Tutor AI",
     page_icon="🗣️",
     layout="wide",
 )
- 
-from core import db, ai_engine, persona, calibration, misconceptions
- 
-# ---------------------------------------------------------------------------
-# Constants
-# ---------------------------------------------------------------------------
- 
-# Number of student turns before auto-generating the report
-MAX_TURNS = 4
-# Number of consecutive gap_flag=False before early report generation
-EARLY_STOP_CONSECUTIVE = 2
- 
- 
-# ---------------------------------------------------------------------------
-# Session state helpers
-# ---------------------------------------------------------------------------
- 
-def _reset_session():
-    """Clear all explain-mode session state to start fresh."""
-    for key in [
-        "em_started", "em_session_id", "em_student_id", "em_topic",
-        "em_confidence", "em_history", "em_gap_flags", "em_difficulty",
-        "em_report", "em_system_prompt", "em_turn_count",
-    ]:
-        st.session_state.pop(key, None)
- 
- 
-# Initialise defaults if not already present
-if "em_started" not in st.session_state:
-    st.session_state["em_started"] = False
-if "em_history" not in st.session_state:
-    st.session_state["em_history"] = []
-if "em_gap_flags" not in st.session_state:
-    st.session_state["em_gap_flags"] = []
-if "em_difficulty" not in st.session_state:
-    st.session_state["em_difficulty"] = "standard"
-if "em_turn_count" not in st.session_state:
-    st.session_state["em_turn_count"] = 0
-if "em_report" not in st.session_s"""
-pages/1_Explain_Mode.py — Core Feynman / Reverse Tutoring experience.
- 
-Flow:
-1. Student picks a topic and rates their confidence (1-10)
-2. Student types their explanation
-3. AI plays a confused peer, asking one probing question per turn
-4. After 4 student turns OR 2 consecutive gap_flag=False, a diagnostic report
-   is generated and displayed with a colour-coded clarity score card
-"""
- 
-import streamlit as st
-import os
-from dotenv import load_dotenv
- 
-load_dotenv()
- 
-st.set_page_config(
-    page_title="Explain Mode — Reverse Tutor AI",
-    page_icon="🗣️",
-    layout="wide",
-)
- 
+
 from core.ui import inject_base_css, render_turn_dots, render_score_badge, render_misconception_block, render_topic_chip
- 
+
 inject_base_css()
- 
+
 from core import db, ai_engine, persona, calibration, misconceptions
- 
+
 # ---------------------------------------------------------------------------
 # Constants
 # ---------------------------------------------------------------------------
- 
+
 # Number of student turns before auto-generating the report
 MAX_TURNS = 4
 # Number of consecutive gap_flag=False before early report generation
 EARLY_STOP_CONSECUTIVE = 2
- 
- 
+
+
 # ---------------------------------------------------------------------------
 # Session state helpers
 # ---------------------------------------------------------------------------
- 
+
 def _reset_session():
     """Clear all explain-mode session state to start fresh."""
     for key in [
@@ -109,8 +49,8 @@ def _reset_session():
         "em_report", "em_system_prompt", "em_turn_count",
     ]:
         st.session_state.pop(key, None)
- 
- 
+
+
 # Initialise defaults if not already present
 if "em_started" not in st.session_state:
     st.session_state["em_started"] = False
@@ -124,10 +64,10 @@ if "em_turn_count" not in st.session_state:
     st.session_state["em_turn_count"] = 0
 if "em_report" not in st.session_state:
     st.session_state["em_report"] = None
- 
+
 # Pre-load topic if coming from Dashboard "Re-probe" button
 _preloaded_topic = st.session_state.pop("reprobe_topic", None)
- 
+
 # ---------------------------------------------------------------------------
 # Page header
 # ---------------------------------------------------------------------------
@@ -139,14 +79,14 @@ st.markdown(
     "After a few turns you'll receive a detailed diagnostic report."
 )
 st.divider()
- 
+
 # ---------------------------------------------------------------------------
 # SETUP PANEL (shown before session starts)
 # ---------------------------------------------------------------------------
 if not st.session_state["em_started"]:
- 
+
     col_setup, col_info = st.columns([2, 1])
- 
+
     with col_setup:
         # Topic input — any subject, not limited to a preset list
         final_topic = st.text_input(
@@ -155,7 +95,7 @@ if not st.session_state["em_started"]:
             placeholder="e.g. Photosynthesis, the French Revolution, Big-O notation, offside rule in football…",
             key="em_topic_input",
         ).strip()
- 
+
         # Confidence slider
         confidence = st.slider(
             "🎯 Before we start — how well do you think you understand this? (1 = barely, 10 = expert)",
@@ -164,7 +104,7 @@ if not st.session_state["em_started"]:
             value=5,
             key="em_confidence_slider",
         )
- 
+
         # Start button
         if st.button("🚀 Start Session", type="primary", key="em_start_btn"):
             if not final_topic:
@@ -184,7 +124,7 @@ if not st.session_state["em_started"]:
                         f"(this is fine for new topics) — continuing without them. Details: {exc}"
                     )
                     known_mc = []
- 
+
                 # Build the system prompt with topic + difficulty + known misconceptions
                 try:
                     sys_prompt = persona.get_system_prompt(
@@ -198,7 +138,7 @@ if not st.session_state["em_started"]:
                         f"Details: {exc}"
                     )
                     st.stop()
- 
+
                 # Create DB records
                 try:
                     student_id = db.get_or_create_default_student()
@@ -211,7 +151,7 @@ if not st.session_state["em_started"]:
                 except Exception as exc:
                     st.error(f"❌ Could not create a session in the database. Details: {exc}")
                     st.stop()
- 
+
                 # Store in session state
                 st.session_state.update({
                     "em_started": True,
@@ -227,7 +167,7 @@ if not st.session_state["em_started"]:
                     "em_report": None,
                 })
                 st.rerun()
- 
+
     with col_info:
         st.info(
             "**How it works:**\n\n"
@@ -238,7 +178,7 @@ if not st.session_state["em_started"]:
             "5. After 4 turns you get a diagnostic report\n\n"
             "The AI never lectures you — it only asks questions."
         )
- 
+
 # ---------------------------------------------------------------------------
 # ACTIVE SESSION
 # ---------------------------------------------------------------------------
@@ -247,7 +187,7 @@ else:
     turn_count = st.session_state["em_turn_count"]
     gap_flags = st.session_state["em_gap_flags"]
     report = st.session_state["em_report"]
- 
+
     # Session header
     col_topic, col_conf, col_turns = st.columns([2, 1, 1])
     with col_topic:
@@ -257,9 +197,9 @@ else:
     with col_turns:
         st.markdown(f"**Turn {turn_count}/{MAX_TURNS}**", unsafe_allow_html=True)
         render_turn_dots(turn_count, MAX_TURNS)
- 
+
     st.divider()
- 
+
     # -----------------------------------------------------------------------
     # Render chat history
     # -----------------------------------------------------------------------
@@ -269,14 +209,14 @@ else:
             avatar="🧑‍🎓" if msg["role"] == "user" else "🤔",
         ):
             st.write(msg["content"])
- 
+
     # -----------------------------------------------------------------------
     # REPORT CARD (if session is complete)
     # -----------------------------------------------------------------------
     if report is not None:
         st.divider()
         st.subheader("📋 Diagnostic Report")
- 
+
         score = report.get("clarity_score", 5)
         if score >= 7:
             score_label = "Strong understanding"
@@ -284,13 +224,13 @@ else:
             score_label = "Partial understanding"
         else:
             score_label = "Significant gaps"
- 
+
         col_score, col_details = st.columns([1, 2])
- 
+
         with col_score:
             render_score_badge(score, score_label)
             st.write("")
- 
+
             # Calibration gap
             cal = calibration.compute_calibration_gap(
                 st.session_state["em_confidence"], score
@@ -301,7 +241,7 @@ else:
                 f"**Actual:** {cal['clarity']}/10\n\n"
                 f"{cal_emoji.get(cal['label'], '')} *{cal['label'].replace('-', ' ').title()}*"
             )
- 
+
         with col_details:
             # Correct points
             correct_points = report.get("correct_points", [])
@@ -309,29 +249,29 @@ else:
                 st.markdown("**✅ What you got right:**")
                 for pt in correct_points:
                     st.markdown(f"- {pt}")
- 
+
             # Misconception (chalk red-pen style)
             misconception = report.get("misconception_found")
             correction = report.get("correct_explanation")
             if misconception:
                 render_misconception_block(misconception, correction)
- 
+
             # Weak subtopic
             weak = report.get("weak_subtopic")
             if weak:
                 st.markdown(f"**🎯 Weakest sub-topic:** *{weak}*")
- 
+
         st.divider()
         if st.button("🔄 Try Again", type="secondary", key="em_try_again"):
             _reset_session()
             st.rerun()
- 
+
     # -----------------------------------------------------------------------
     # INPUT AREA (only shown while session is active)
     # -----------------------------------------------------------------------
     elif turn_count < MAX_TURNS:
         student_text = ""
- 
+
         st.markdown("### ✍️ Your turn — explain it to Alex")
         typed = st.text_area(
             "Type your explanation here:",
@@ -344,14 +284,14 @@ else:
                 st.warning("Please type something before sending.")
             else:
                 student_text = typed.strip()
- 
+
         # Process the student's input
         if student_text:
             student_msg = student_text
- 
+
             # Append student message to history
             st.session_state["em_history"].append({"role": "user", "content": student_msg})
- 
+
             # Rebuild system prompt with updated difficulty
             try:
                 known_mc = misconceptions.get_misconceptions_for_topic(topic)
@@ -360,7 +300,7 @@ else:
             except Exception as exc:
                 st.warning(f"⚠️ Couldn't refresh misconceptions for '{topic}': {exc} — continuing without them.")
                 known_mc = []
- 
+
             try:
                 sys_prompt = persona.get_system_prompt(
                     topic=topic,
@@ -370,7 +310,7 @@ else:
             except Exception as exc:
                 st.error(f"❌ Could not build the AI persona prompt. Details: {exc}")
                 st.stop()
- 
+
             # Call the AI
             try:
                 with st.spinner("Alex is thinking…"):
@@ -381,27 +321,27 @@ else:
             except Exception as exc:
                 st.error(f"❌ The AI call failed unexpectedly. Details: {exc}")
                 st.stop()
- 
+
             peer_reply = result.get("peer_reply", "")
             gap_flag = result.get("internal_gap_flag", True)
- 
+
             # Append AI reply to history
             st.session_state["em_history"].append({"role": "assistant", "content": peer_reply})
             st.session_state["em_gap_flags"].append(gap_flag)
             st.session_state["em_turn_count"] += 1
- 
+
             # Adjust difficulty for next turn
             st.session_state["em_difficulty"] = calibration.adjust_difficulty(
                 st.session_state["em_gap_flags"]
             )
- 
+
             # Check early stop: 2 consecutive gap_flag=False
             recent = st.session_state["em_gap_flags"][-EARLY_STOP_CONSECUTIVE:]
             early_stop = (
                 len(recent) == EARLY_STOP_CONSECUTIVE
                 and all(f is False for f in recent)
             )
- 
+
             # Auto-trigger report if max turns reached or early stop
             new_turn = st.session_state["em_turn_count"]
             if new_turn >= MAX_TURNS or early_stop:
@@ -410,7 +350,7 @@ else:
                         topic=topic,
                         conversation_history=st.session_state["em_history"],
                     )
- 
+
                 # Save to DB
                 from core.memory import format_history
                 transcript_str = format_history(st.session_state["em_history"])
@@ -419,7 +359,7 @@ else:
                     clarity_score=report_data.get("clarity_score", 5),
                     transcript=transcript_str,
                 )
- 
+
                 # Log concept weakness if one was found
                 weak_sub = report_data.get("weak_subtopic")
                 if weak_sub:
@@ -429,11 +369,11 @@ else:
                         sub_concept=weak_sub,
                         clarity_score=report_data.get("clarity_score", 5),
                     )
- 
+
                 st.session_state["em_report"] = report_data
- 
+
             st.rerun()
- 
+
     # Reset button always visible during session
     st.divider()
     if st.button("↩️ Start Over", key="em_reset", type="secondary"):
