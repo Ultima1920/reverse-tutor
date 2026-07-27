@@ -519,52 +519,6 @@ with s1:
     </div>
     """, unsafe_allow_html=True)
 
-with s2:
-
-    if VOICE_INPUT_ENABLED:
-        icon = "🟢"
-        status = "Ready"
-    else:
-        icon = "🟠"
-        status = "Disabled"
-
-    st.markdown(f"""
-    <div class="status-card">
-
-    <h3>🎙 Voice Input</h3>
-
-    <p class="green">{icon} {status}</p>
-
-    <p class="small-text">
-    Explain concepts naturally using your microphone.
-    </p>
-
-    </div>
-    """, unsafe_allow_html=True)
-
-with s3:
-
-    if VOICE_OUTPUT_ENABLED:
-        icon = "🟢"
-        status = "Ready"
-    else:
-        icon = "🟠"
-        status = "Disabled"
-
-    st.markdown(f"""
-    <div class="status-card">
-
-    <h3>🔊 Voice Output</h3>
-
-    <p class="green">{icon} {status}</p>
-
-    <p class="small-text">
-    AI responses can be spoken back to you.
-    </p>
-
-    </div>
-    """, unsafe_allow_html=True)
-
 st.markdown("<br>", unsafe_allow_html=True)
 
 # ============================================================
