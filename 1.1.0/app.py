@@ -60,25 +60,25 @@ with st.sidebar:
 
     st.page_link(
         "app.py",
-        label="🏠 Home",
+        label="Home",
         icon="🏠",
     )
 
     st.page_link(
         "pages/1_Explain_Mode.py",
-        label="🧠 Explain Mode",
+        label="Explain Mode",
         icon="🧠",
     )
 
     st.page_link(
         "pages/2_Error_Hunt_Mode.py",
-        label="🔍 Error Hunt",
+        label="Error Hunt",
         icon="🔍",
     )
 
     st.page_link(
         "pages/3_Dashboard.py",
-        label="📊 Dashboard",
+        label="Dashboard",
         icon="📊",
     )
 
