@@ -12,6 +12,7 @@ load_dotenv()
 from core.db import init_db
 from core.ui import (
     inject_base_css,
+    render_sidebar,
     render_page_header,
     render_metric_card,
     render_info_card,
