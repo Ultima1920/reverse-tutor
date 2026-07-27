@@ -20,6 +20,7 @@ st.set_page_config(
 
 from core.ui import (
     inject_base_css,
+    render_sidebar,
     render_page_header,
     render_metric_card,
     render_info_card,
@@ -31,6 +32,8 @@ from core.ui import (
 from core import ai_engine
 
 inject_base_css()
+
+render_sidebar()
 
 # ==========================================================
 # SESSION DEFAULTS
