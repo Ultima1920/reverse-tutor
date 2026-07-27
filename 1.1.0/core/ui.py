@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import streamlit as st
 from html import escape
+import textwrap
 
 # ==========================================================
 # THEME COLORS
@@ -30,356 +31,232 @@ SUBTEXT = "#94A3B8"
 # BASE CSS
 # ==========================================================
 
-
 def inject_base_css():
-
     st.markdown(
-        f"""
-<style>
-
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
-
-html, body, [class*="css"] {{
-
-font-family: 'Inter', sans-serif;
-
-background:{BACKGROUND};
-
-color:{TEXT};
-
-}}
-
-.stApp{{
-background:{BACKGROUND};
-}}
-
-section[data-testid="stSidebar"]{{
-
-background:#111827;
-border-right:1px solid {BORDER};
-
-}}
-
-section[data-testid="stSidebar"] *{{
-color:{TEXT};
-}}
-
-h1,h2,h3,h4,h5,h6{{
-color:{TEXT};
-font-weight:700;
-}}
-
-p,span,label,div{{
-color:{TEXT};
-}}
-
-small{{
-color:{SUBTEXT};
-}}
-
-hr{{
-border:none;
-height:1px;
-background:{BORDER};
-margin:30px 0;
-}}
-
-div[data-testid="stMetric"]{{
-
-background:{CARD};
-
-border:1px solid {BORDER};
-
-padding:20px;
-
-border-radius:16px;
-
-}}
-
-div[data-testid="stMetricLabel"]{{
-
-color:{SUBTEXT};
-
-font-size:14px;
-
-}}
-
-div[data-testid="stMetricValue"]{{
-
-font-size:28px;
-
-font-weight:700;
-
-}}
-
-.stButton>button{{
-
-background:{PRIMARY};
-
-color:white;
-
-border:none;
-
-border-radius:12px;
-
-padding:12px 20px;
-
-font-weight:600;
-
-width:100%;
-
-}}
-
-.stButton>button:hover{{
-
-background:#4F46E5;
-
-}}
-
-.stTextInput input,
-.stTextArea textarea{{
-
-background:{CARD};
-
-color:{TEXT};
-
-border:1px solid {BORDER};
-
-border-radius:12px;
-
-}}
-
-.stTextInput input:focus,
-.stTextArea textarea:focus{{
-
-border:1px solid {PRIMARY};
-
-}}
-
-.stSelectbox div[data-baseweb="select"]{{
-
-background:{CARD};
-
-}}
-
-.stSlider{{
-
-padding-top:10px;
-
-}}
-
-.block-container{{
-
-padding-top:2rem;
-
-padding-bottom:2rem;
-
-max-width:1200px;
-
-}}
-
-.hero{{
-
-background:linear-gradient(
-135deg,
-#1E293B,
-#111827
-);
-
-padding:40px;
-
-border-radius:22px;
-
-border:1px solid {BORDER};
-
-margin-bottom:30px;
-
-}}
-
-.hero-title{{
-
-font-size:48px;
-
-font-weight:800;
-
-margin-bottom:10px;
-
-}}
-
-.hero-sub{{
-
-font-size:18px;
-
-color:{SUBTEXT};
-
-}}
-
-.card{{
-
-background:{CARD};
-
-border:1px solid {BORDER};
-
-border-radius:18px;
-
-padding:22px;
-
-margin-bottom:18px;
-
-}}
-
-.info-card{{
-
-background:{CARD};
-
-border-left:5px solid {PRIMARY};
-
-padding:20px;
-
-border-radius:16px;
-
-margin-bottom:18px;
-
-}}
-
-.success-card{{
-
-background:{CARD};
-
-border-left:5px solid {SUCCESS};
-
-padding:20px;
-
-border-radius:16px;
-
-margin-bottom:18px;
-
-}}
-
-.warning-card{{
-
-background:{CARD};
-
-border-left:5px solid {WARNING};
-
-padding:20px;
-
-border-radius:16px;
-
-margin-bottom:18px;
-
-}}
-
-.danger-card{{
-
-background:{CARD};
-
-border-left:5px solid {DANGER};
-
-padding:20px;
-
-border-radius:16px;
-
-margin-bottom:18px;
-
-}}
-
-.topic-chip{{
-
-display:inline-block;
-
-padding:8px 18px;
-
-border-radius:999px;
-
-background:{PRIMARY};
-
-color:white;
-
-font-weight:600;
-
-font-size:14px;
-
-}}
-
-.chat-user{{
-
-background:#2563EB20;
-
-border:1px solid #2563EB;
-
-padding:18px;
-
-border-radius:16px;
-
-margin:12px 0;
-
-}}
-
-.chat-ai{{
-
-background:#10B98120;
-
-border:1px solid #10B981;
-
-padding:18px;
-
-border-radius:16px;
-
-margin:12px 0;
-
-}}
-
-.footer{{
-
-text-align:center;
-
-padding:30px;
-
-color:{SUBTEXT};
-
-}}
-
-.badge{{
-
-display:inline-block;
-
-padding:8px 14px;
-
-background:{PRIMARY};
-
-border-radius:999px;
-
-font-size:13px;
-
-font-weight:600;
-
-margin-bottom:15px;
-
-}}
-
-.score-good{{
-
-background:{SUCCESS};
-
-}}
-
-.score-mid{{
-
-background:{WARNING};
-
-}}
-
-.score-bad{{
-
-background:{DANGER};
-
-}}
-
-</style>
-""",
+        textwrap.dedent(f"""
+            <style>
+
+            @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+            html, body, [class*="css"] {{
+                font-family: 'Inter', sans-serif;
+                background:{BACKGROUND};
+                color:{TEXT};
+            }}
+
+            .stApp{{
+                background:{BACKGROUND};
+            }}
+
+            section[data-testid="stSidebar"]{{
+                background:#111827;
+                border-right:1px solid {BORDER};
+            }}
+
+            section[data-testid="stSidebar"] *{{
+                color:{TEXT};
+            }}
+
+            h1,h2,h3,h4,h5,h6{{
+                color:{TEXT};
+                font-weight:700;
+            }}
+
+            p,span,label,div{{
+                color:{TEXT};
+            }}
+
+            small{{
+                color:{SUBTEXT};
+            }}
+
+            hr{{
+                border:none;
+                height:1px;
+                background:{BORDER};
+                margin:30px 0;
+            }}
+
+            div[data-testid="stMetric"]{{
+                background:{CARD};
+                border:1px solid {BORDER};
+                padding:20px;
+                border-radius:16px;
+            }}
+
+            div[data-testid="stMetricLabel"]{{
+                color:{SUBTEXT};
+                font-size:14px;
+            }}
+
+            div[data-testid="stMetricValue"]{{
+                font-size:28px;
+                font-weight:700;
+            }}
+
+            .stButton>button{{
+                background:{PRIMARY};
+                color:white;
+                border:none;
+                border-radius:12px;
+                padding:12px 20px;
+                font-weight:600;
+                width:100%;
+            }}
+
+            .stButton>button:hover{{
+                background:#4F46E5;
+            }}
+
+            .stTextInput input,
+            .stTextArea textarea{{
+                background:{CARD};
+                color:{TEXT};
+                border:1px solid {BORDER};
+                border-radius:12px;
+            }}
+
+            .stTextInput input:focus,
+            .stTextArea textarea:focus{{
+                border:1px solid {PRIMARY};
+            }}
+
+            .stSelectbox div[data-baseweb="select"]{{
+                background:{CARD};
+            }}
+
+            .stSlider{{
+                padding-top:10px;
+            }}
+
+            .block-container{{
+                padding-top:2rem;
+                padding-bottom:2rem;
+                max-width:1200px;
+            }}
+
+            .hero{{
+                background:linear-gradient(
+                    135deg,
+                    #1E293B,
+                    #111827
+                );
+                padding:40px;
+                border-radius:22px;
+                border:1px solid {BORDER};
+                margin-bottom:30px;
+            }}
+
+            .hero-title{{
+                font-size:48px;
+                font-weight:800;
+                margin-bottom:10px;
+            }}
+
+            .hero-sub{{
+                font-size:18px;
+                color:{SUBTEXT};
+            }}
+
+            .card{{
+                background:{CARD};
+                border:1px solid {BORDER};
+                border-radius:18px;
+                padding:22px;
+                margin-bottom:18px;
+            }}
+
+            .info-card{{
+                background:{CARD};
+                border-left:5px solid {PRIMARY};
+                padding:20px;
+                border-radius:16px;
+                margin-bottom:18px;
+            }}
+
+            .success-card{{
+                background:{CARD};
+                border-left:5px solid {SUCCESS};
+                padding:20px;
+                border-radius:16px;
+                margin-bottom:18px;
+            }}
+
+            .warning-card{{
+                background:{CARD};
+                border-left:5px solid {WARNING};
+                padding:20px;
+                border-radius:16px;
+                margin-bottom:18px;
+            }}
+
+            .danger-card{{
+                background:{CARD};
+                border-left:5px solid {DANGER};
+                padding:20px;
+                border-radius:16px;
+                margin-bottom:18px;
+            }}
+
+            .topic-chip{{
+                display:inline-block;
+                padding:8px 18px;
+                border-radius:999px;
+                background:{PRIMARY};
+                color:white;
+                font-weight:600;
+                font-size:14px;
+            }}
+
+            .chat-user{{
+                background:#2563EB20;
+                border:1px solid #2563EB;
+                padding:18px;
+                border-radius:16px;
+                margin:12px 0;
+            }}
+
+            .chat-ai{{
+                background:#10B98120;
+                border:1px solid #10B981;
+                padding:18px;
+                border-radius:16px;
+                margin:12px 0;
+            }}
+
+            .footer{{
+                text-align:center;
+                padding:30px;
+                color:{SUBTEXT};
+            }}
+
+            .badge{{
+                display:inline-block;
+                padding:8px 14px;
+                background:{PRIMARY};
+                border-radius:999px;
+                font-size:13px;
+                font-weight:600;
+                margin-bottom:15px;
+            }}
+
+            .score-good{{
+                background:{SUCCESS};
+            }}
+
+            .score-mid{{
+                background:{WARNING};
+            }}
+
+            .score-bad{{
+                background:{DANGER};
+            }}
+
+            </style>
+        """),
         unsafe_allow_html=True,
     )
+    
 # ==========================================================
 # PAGE HEADER
 # ==========================================================
@@ -390,7 +267,7 @@ def render_page_header(title: str, subtitle: str = "", icon: str = ""):
     icon_html = f"<div style='font-size:58px;margin-bottom:12px;'>{icon}</div>" if icon else ""
 
     st.markdown(
-        f"""
+        textwrap.dedent(f"""
         <div class="hero">
 
             {icon_html}
@@ -404,10 +281,9 @@ def render_page_header(title: str, subtitle: str = "", icon: str = ""):
             </div>
 
         </div>
-        """,
+        """),
         unsafe_allow_html=True,
     )
-
 
 # ==========================================================
 # METRIC CARD
@@ -417,7 +293,7 @@ def render_metric_card(title: str, value: str, color: str = PRIMARY):
     """Beautiful metric card."""
 
     st.markdown(
-        f"""
+        textwrap.dedent(f"""
         <div class="card">
 
             <div style="
@@ -440,7 +316,7 @@ def render_metric_card(title: str, value: str, color: str = PRIMARY):
             </div>
 
         </div>
-        """,
+        """),
         unsafe_allow_html=True,
     )
 
@@ -464,7 +340,7 @@ def render_info_card(
     }.get(variant, "info-card")
 
     st.markdown(
-        f"""
+        textwrap.dedent(f"""
         <div class="{cls}">
 
             <h4 style="margin-top:0;">
@@ -480,7 +356,7 @@ def render_info_card(
             </div>
 
         </div>
-        """,
+        """),
         unsafe_allow_html=True,
     )
 
@@ -518,7 +394,7 @@ def render_turn_dots(turn: int, total: int = 4):
         with col:
 
             st.markdown(
-                f"""
+                textwrap.dedent(f"""
                 <div style="
                     width:18px;
                     height:18px;
@@ -527,7 +403,7 @@ def render_turn_dots(turn: int, total: int = 4):
                     background:{color};
                 ">
                 </div>
-                """,
+                """),
                 unsafe_allow_html=True,
             )
 
@@ -558,7 +434,7 @@ def render_chat_card(role: str, message: str):
         name = "Alex"
 
     st.markdown(
-        f"""
+        textwrap.dedent(f"""
         <div class="{cls}">
 
             <div style="
@@ -578,7 +454,7 @@ def render_chat_card(role: str, message: str):
             </div>
 
         </div>
-        """,
+        """),
         unsafe_allow_html=True,
     )
 
@@ -589,7 +465,7 @@ def render_chat_card(role: str, message: str):
 
 def render_section(title: str):
     st.markdown(
-        f"""
+        textwrap.dedent(f"""
         <h2 style="
             margin-top:30px;
             margin-bottom:18px;
@@ -597,7 +473,7 @@ def render_section(title: str):
             font-weight:700;">
             {escape(title)}
         </h2>
-        """,
+        """),
         unsafe_allow_html=True,
     )
 
@@ -626,7 +502,7 @@ def render_score_badge(score: int | float, label: str = ""):
         cls = "score-bad"
 
     st.markdown(
-        f"""
+        textwrap.dedent(f"""
         <div class="card" style="text-align:center;">
 
             <div style="
@@ -659,7 +535,7 @@ def render_score_badge(score: int | float, label: str = ""):
             </div>
 
         </div>
-        """,
+        """),
         unsafe_allow_html=True,
     )
 
@@ -701,7 +577,7 @@ def render_misconception_block(
         """
 
     st.markdown(
-        f"""
+        textwrap.dedent(f"""
         <div class="danger-card">
 
             <div style="
@@ -725,7 +601,7 @@ def render_misconception_block(
             {correction_html}
 
         </div>
-        """,
+        """),
         unsafe_allow_html=True,
     )
 
@@ -736,7 +612,7 @@ def render_misconception_block(
 
 def render_status_badge(text: str, color: str = PRIMARY):
     st.markdown(
-        f"""
+        textwrap.dedent(f"""
         <span style="
             display:inline-block;
             background:{color};
@@ -748,7 +624,7 @@ def render_status_badge(text: str, color: str = PRIMARY):
             margin:4px 0;">
             {escape(text)}
         </span>
-        """,
+        """),
         unsafe_allow_html=True,
     )
 
@@ -759,7 +635,7 @@ def render_status_badge(text: str, color: str = PRIMARY):
 
 def render_empty_state(title: str, body: str):
     st.markdown(
-        f"""
+        textwrap.dedent(f"""
         <div class="card" style="text-align:center;padding:40px;">
 
             <div style="font-size:46px;margin-bottom:12px;">
@@ -778,7 +654,7 @@ def render_empty_state(title: str, body: str):
             </p>
 
         </div>
-        """,
+        """),
         unsafe_allow_html=True,
     )
 
@@ -789,7 +665,7 @@ def render_empty_state(title: str, body: str):
 
 def render_footer():
     st.markdown(
-        f"""
+        textwrap.dedent(f"""
         <div class="footer">
 
             <hr>
@@ -834,7 +710,7 @@ def render_footer():
             </div>
 
         </div>
-        """,
+        """),
         unsafe_allow_html=True,
     )
 
