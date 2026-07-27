@@ -62,7 +62,6 @@ def inject_base_css():
         textwrap.dedent(f"""
             <style>
             @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
-            div[data-testid="stSidebarNav"]{display: none;}
             html, body, [class*="css"] {{
                 font-family: 'Inter', sans-serif;
                 background:{BACKGROUND};
