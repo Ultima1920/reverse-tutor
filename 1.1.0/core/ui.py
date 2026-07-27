@@ -1,356 +1,877 @@
 """
-core/ui.py — Shared "Chalkboard & Red Pen" design system for Reverse Tutor AI.
-
-Every page calls inject_base_css() once, near the top, right after
-st.set_page_config(). The rest of this module is small, reusable HTML
-snippets (score circles, misconception call-outs, turn-progress dots,
-topic chips) that keep the same look everywhere they're used.
-
-Design tokens (see palette below) are the single source of truth —
-change a color here and it updates across the whole app.
+core/ui.py
+Modern UI Components for Reverse Tutor AI
 """
 
+from __future__ import annotations
+
 import streamlit as st
+from html import escape
 
-# ---------------------------------------------------------------------------
-# Design tokens
-# ---------------------------------------------------------------------------
-BG_DEEP = "#10201A"       # page background — chalkboard
-BG_PANEL = "#172B22"      # card / panel surface
-CHALK_WHITE = "#F5F1E6"   # headings
-CHALK_SAGE = "#A8BFB0"    # body text
-CHALK_YELLOW = "#E8C468"  # primary accent — chalk stick
-PEN_RED = "#E2626B"       # corrections / errors — red pen
-SLATE_TEAL = "#5FB8A6"    # correct / success, distinct from yellow
+# ==========================================================
+# THEME COLORS
+# ==========================================================
 
-# A gently wobbly circle path used for the hand-drawn score badge
-_CHALK_CIRCLE_PATH = (
-    "M50,10 C70,8 92,25 90,50 C88,75 70,92 48,90 "
-    "C25,88 8,70 10,45 C12,22 30,8 50,10 Z"
-)
+PRIMARY = "#6366F1"
+SUCCESS = "#22C55E"
+WARNING = "#F59E0B"
+DANGER = "#EF4444"
+
+BACKGROUND = "#0F172A"
+CARD = "#1E293B"
+CARD_LIGHT = "#273549"
+
+BORDER = "#334155"
+
+TEXT = "#F8FAFC"
+SUBTEXT = "#94A3B8"
+
+# ==========================================================
+# BASE CSS
+# ==========================================================
 
 
-def inject_base_css() -> None:
-    """Inject the shared chalkboard design system. Call once per page,
-    right after st.set_page_config()."""
+def inject_base_css():
+
     st.markdown(
         f"""
-        <style>
-        @import url('https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap');
+<style>
 
-        :root {{
-            --bg-deep: {BG_DEEP};
-            --bg-panel: {BG_PANEL};
-            --chalk-white: {CHALK_WHITE};
-            --chalk-sage: {CHALK_SAGE};
-            --chalk-yellow: {CHALK_YELLOW};
-            --pen-red: {PEN_RED};
-            --slate-teal: {SLATE_TEAL};
-        }}
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
-        /* ---- Base page ---------------------------------------------------- */
-        .stApp {{
-            background:
-                radial-gradient(circle at 15% 8%, rgba(232,196,104,0.05), transparent 40%),
-                radial-gradient(circle at 85% 92%, rgba(95,184,166,0.05), transparent 40%),
-                var(--bg-deep);
-            color: var(--chalk-sage);
-            font-family: 'Inter', sans-serif;
-        }}
-        html, body, [class*="css"] {{ font-family: 'Inter', sans-serif; }}
+html, body, [class*="css"] {{
 
-        h1, h2, h3 {{
-            font-family: 'Kalam', cursive;
-            color: var(--chalk-white) !important;
-            font-weight: 700;
-            letter-spacing: 0.2px;
-        }}
-        h4, h5, h6 {{ color: var(--chalk-white) !important; }}
-        p, li, label, span {{ color: var(--chalk-sage); }}
-        strong {{ color: var(--chalk-white); }}
+font-family: 'Inter', sans-serif;
 
-        /* ---- Dividers: dashed chalk line instead of a plain hr ------------ */
-        hr {{
-            border: none;
-            border-top: 2px dashed rgba(168,191,176,0.35);
-            margin: 1.6rem 0;
-        }}
+background:{BACKGROUND};
 
-        /* ---- Buttons -------------------------------------------------------*/
-        [data-testid="stButton"] button,
-        [data-testid="baseButton-primary"],
-        [data-testid="baseButton-secondary"] {{
-            border-radius: 8px;
-            font-weight: 600;
-            font-family: 'Inter', sans-serif;
-            border: 2px solid var(--chalk-yellow);
-            transition: transform 0.12s ease, box-shadow 0.12s ease;
-        }}
-        [data-testid="stButton"] button[kind="primary"],
-        [data-testid="baseButton-primary"] {{
-            background: var(--chalk-yellow);
-            color: var(--bg-deep) !important;
-        }}
-        [data-testid="stButton"] button[kind="secondary"],
-        [data-testid="baseButton-secondary"] {{
-            background: transparent;
-            color: var(--chalk-yellow) !important;
-        }}
-        [data-testid="stButton"] button:hover {{
-            transform: translateY(-2px);
-            box-shadow: 0 6px 0 rgba(0,0,0,0.25);
-        }}
+color:{TEXT};
 
-        /* ---- Text inputs / text areas -------------------------------------*/
-        [data-testid="stTextArea"] textarea,
-        [data-testid="stTextInput"] input {{
-            background: var(--bg-panel) !important;
-            border: 2px dashed rgba(168,191,176,0.4) !important;
-            border-radius: 8px !important;
-            color: var(--chalk-white) !important;
-            font-family: 'Inter', sans-serif;
-        }}
-        [data-testid="stTextArea"] textarea:focus,
-        [data-testid="stTextInput"] input:focus {{
-            border-color: var(--chalk-yellow) !important;
-        }}
+}}
 
-        /* ---- Selectbox / slider -------------------------------------------*/
-        [data-baseweb="select"] > div {{
-            background: var(--bg-panel) !important;
-            border: 2px dashed rgba(168,191,176,0.4) !important;
-            border-radius: 8px !important;
-        }}
+.stApp{{
+background:{BACKGROUND};
+}}
 
-        /* ---- Metrics --------------------------------------------------------*/
-        [data-testid="stMetric"] {{
-            background: var(--bg-panel);
-            border-radius: 10px;
-            border-left: 4px solid var(--chalk-yellow);
-            padding: 0.9rem 1rem;
-        }}
-        [data-testid="stMetricValue"] {{
-            font-family: 'IBM Plex Mono', monospace;
-            color: var(--chalk-white) !important;
-        }}
+section[data-testid="stSidebar"]{{
 
-        /* ---- Alerts (info / success / error / warning) --------------------*/
-        [data-testid="stAlert"] {{
-            border-radius: 10px;
-            background: var(--bg-panel);
-            border: 1px solid rgba(168,191,176,0.25);
-        }}
+background:#111827;
+border-right:1px solid {BORDER};
 
-        /* ---- Dataframe ------------------------------------------------------*/
-        [data-testid="stDataFrame"] {{
-            border: 2px dashed rgba(168,191,176,0.3);
-            border-radius: 10px;
-        }}
+}}
 
-        /* ---- Sidebar ----------------------------------------------------------*/
-        [data-testid="stSidebar"] {{
-            background: var(--bg-panel);
-            border-right: 2px dashed rgba(168,191,176,0.25);
-        }}
+section[data-testid="stSidebar"] *{{
+color:{TEXT};
+}}
 
-        /* ---- Chat messages ---------------------------------------------------*/
-        [data-testid="stChatMessage"] {{
-            background: var(--bg-panel);
-            border: 2px dashed rgba(168,191,176,0.3);
-            border-radius: 12px;
-        }}
+h1,h2,h3,h4,h5,h6{{
+color:{TEXT};
+font-weight:700;
+}}
 
-        /* ---- Custom components (see below) ------------------------------- */
-        .chalk-hero {{
-            text-align: center;
-            padding: 3rem 1.5rem 2.5rem 1.5rem;
-            background: var(--bg-panel);
-            border: 2px dashed rgba(232,196,104,0.35);
-            border-radius: 18px;
-            margin-bottom: 1.6rem;
-        }}
-        .chalk-hero h1 {{
-            font-size: 3.2rem;
-            margin: 0;
-        }}
-        .chalk-hero .tagline {{
-            font-family: 'IBM Plex Mono', monospace;
-            color: var(--chalk-yellow);
-            font-size: 0.85rem;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            margin-bottom: 0.6rem;
-        }}
-        .chalk-hero p {{
-            font-size: 1.05rem;
-            color: var(--chalk-sage);
-            max-width: 640px;
-            margin: 0.8rem auto 0 auto;
-        }}
+p,span,label,div{{
+color:{TEXT};
+}}
 
-        .index-card {{
-            background: var(--bg-panel);
-            border: 2px solid rgba(168,191,176,0.25);
-            border-bottom: none;
-            border-radius: 14px 14px 0 0;
-            padding: 1.4rem 1.2rem 1.1rem 1.2rem;
-            min-height: 190px;
-            transition: transform 0.15s ease;
-        }}
-        .index-card:hover {{ transform: translateY(-4px) rotate(-0.3deg); }}
-        .index-card h3 {{ font-size: 1.15rem; margin: 0 0 0.5rem 0; }}
-        .index-card p {{ font-size: 0.88rem; margin: 0; }}
+small{{
+color:{SUBTEXT};
+}}
 
-        .topic-chip {{
-            display: inline-block;
-            font-family: 'IBM Plex Mono', monospace;
-            font-size: 0.78rem;
-            color: var(--bg-deep);
-            background: var(--chalk-yellow);
-            padding: 0.15rem 0.6rem;
-            border-radius: 999px;
-            font-weight: 600;
-        }}
+hr{{
+border:none;
+height:1px;
+background:{BORDER};
+margin:30px 0;
+}}
 
-        .turn-dots {{ display: flex; gap: 6px; align-items: center; }}
-        .turn-dot {{
-            width: 10px; height: 10px; border-radius: 50%;
-            border: 2px solid var(--chalk-yellow);
-            background: transparent;
-        }}
-        .turn-dot.filled {{ background: var(--chalk-yellow); }}
+div[data-testid="stMetric"]{{
 
-        .chalk-score-wrap {{ display: flex; align-items: center; gap: 1.2rem; }}
-        .chalk-score-svg {{ width: 92px; height: 92px; flex-shrink: 0; }}
-        .chalk-score-num {{
-            font-family: 'IBM Plex Mono', monospace;
-            font-size: 1.5rem;
-            font-weight: 600;
-        }}
-        .chalk-score-label {{
-            font-family: 'Inter', sans-serif;
-            font-size: 0.82rem;
-            color: var(--chalk-sage);
-        }}
+background:{CARD};
 
-        .misconception-block {{
-            background: var(--bg-panel);
-            border: 2px dashed var(--pen-red);
-            border-radius: 10px;
-            padding: 1rem 1.1rem;
-            margin: 0.6rem 0;
-        }}
-        .misconception-block .label {{
-            font-family: 'IBM Plex Mono', monospace;
-            font-size: 0.72rem;
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
-            color: var(--pen-red);
-        }}
-        .misconception-block .text {{
-            color: var(--chalk-white);
-            text-decoration: underline wavy var(--pen-red);
-            text-decoration-thickness: 2px;
-            text-underline-offset: 4px;
-        }}
+border:1px solid {BORDER};
 
-        .correction-block {{
-            background: var(--bg-panel);
-            border: 2px solid var(--slate-teal);
-            border-radius: 10px;
-            padding: 1rem 1.1rem;
-            margin: 0.6rem 0;
-        }}
-        .correction-block .label {{
-            font-family: 'IBM Plex Mono', monospace;
-            font-size: 0.72rem;
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
-            color: var(--slate-teal);
-        }}
-        .correction-block .text {{ color: var(--chalk-white); }}
-        </style>
+padding:20px;
+
+border-radius:16px;
+
+}}
+
+div[data-testid="stMetricLabel"]{{
+
+color:{SUBTEXT};
+
+font-size:14px;
+
+}}
+
+div[data-testid="stMetricValue"]{{
+
+font-size:28px;
+
+font-weight:700;
+
+}}
+
+.stButton>button{{
+
+background:{PRIMARY};
+
+color:white;
+
+border:none;
+
+border-radius:12px;
+
+padding:12px 20px;
+
+font-weight:600;
+
+width:100%;
+
+}}
+
+.stButton>button:hover{{
+
+background:#4F46E5;
+
+}}
+
+.stTextInput input,
+.stTextArea textarea{{
+
+background:{CARD};
+
+color:{TEXT};
+
+border:1px solid {BORDER};
+
+border-radius:12px;
+
+}}
+
+.stTextInput input:focus,
+.stTextArea textarea:focus{{
+
+border:1px solid {PRIMARY};
+
+}}
+
+.stSelectbox div[data-baseweb="select"]{{
+
+background:{CARD};
+
+}}
+
+.stSlider{{
+
+padding-top:10px;
+
+}}
+
+.block-container{{
+
+padding-top:2rem;
+
+padding-bottom:2rem;
+
+max-width:1200px;
+
+}}
+
+.hero{{
+
+background:linear-gradient(
+135deg,
+#1E293B,
+#111827
+);
+
+padding:40px;
+
+border-radius:22px;
+
+border:1px solid {BORDER};
+
+margin-bottom:30px;
+
+}}
+
+.hero-title{{
+
+font-size:48px;
+
+font-weight:800;
+
+margin-bottom:10px;
+
+}}
+
+.hero-sub{{
+
+font-size:18px;
+
+color:{SUBTEXT};
+
+}}
+
+.card{{
+
+background:{CARD};
+
+border:1px solid {BORDER};
+
+border-radius:18px;
+
+padding:22px;
+
+margin-bottom:18px;
+
+}}
+
+.info-card{{
+
+background:{CARD};
+
+border-left:5px solid {PRIMARY};
+
+padding:20px;
+
+border-radius:16px;
+
+margin-bottom:18px;
+
+}}
+
+.success-card{{
+
+background:{CARD};
+
+border-left:5px solid {SUCCESS};
+
+padding:20px;
+
+border-radius:16px;
+
+margin-bottom:18px;
+
+}}
+
+.warning-card{{
+
+background:{CARD};
+
+border-left:5px solid {WARNING};
+
+padding:20px;
+
+border-radius:16px;
+
+margin-bottom:18px;
+
+}}
+
+.danger-card{{
+
+background:{CARD};
+
+border-left:5px solid {DANGER};
+
+padding:20px;
+
+border-radius:16px;
+
+margin-bottom:18px;
+
+}}
+
+.topic-chip{{
+
+display:inline-block;
+
+padding:8px 18px;
+
+border-radius:999px;
+
+background:{PRIMARY};
+
+color:white;
+
+font-weight:600;
+
+font-size:14px;
+
+}}
+
+.chat-user{{
+
+background:#2563EB20;
+
+border:1px solid #2563EB;
+
+padding:18px;
+
+border-radius:16px;
+
+margin:12px 0;
+
+}}
+
+.chat-ai{{
+
+background:#10B98120;
+
+border:1px solid #10B981;
+
+padding:18px;
+
+border-radius:16px;
+
+margin:12px 0;
+
+}}
+
+.footer{{
+
+text-align:center;
+
+padding:30px;
+
+color:{SUBTEXT};
+
+}}
+
+.badge{{
+
+display:inline-block;
+
+padding:8px 14px;
+
+background:{PRIMARY};
+
+border-radius:999px;
+
+font-size:13px;
+
+font-weight:600;
+
+margin-bottom:15px;
+
+}}
+
+.score-good{{
+
+background:{SUCCESS};
+
+}}
+
+.score-mid{{
+
+background:{WARNING};
+
+}}
+
+.score-bad{{
+
+background:{DANGER};
+
+}}
+
+</style>
+""",
+        unsafe_allow_html=True,
+    )
+# ==========================================================
+# PAGE HEADER
+# ==========================================================
+
+def render_page_header(title: str, subtitle: str = "", icon: str = ""):
+    """Render a modern page hero/header."""
+
+    icon_html = f"<div style='font-size:58px;margin-bottom:12px;'>{icon}</div>" if icon else ""
+
+    st.markdown(
+        f"""
+        <div class="hero">
+
+            {icon_html}
+
+            <div class="hero-title">
+                {escape(title)}
+            </div>
+
+            <div class="hero-sub">
+                {escape(subtitle)}
+            </div>
+
+        </div>
         """,
         unsafe_allow_html=True,
     )
 
 
-def _score_color(score: int) -> str:
-    if score >= 7:
-        return SLATE_TEAL
-    elif score >= 4:
-        return CHALK_YELLOW
+# ==========================================================
+# METRIC CARD
+# ==========================================================
+
+def render_metric_card(title: str, value: str, color: str = PRIMARY):
+    """Beautiful metric card."""
+
+    st.markdown(
+        f"""
+        <div class="card">
+
+            <div style="
+                color:{SUBTEXT};
+                font-size:14px;
+                margin-bottom:8px;
+                font-weight:500;">
+
+                {escape(title)}
+
+            </div>
+
+            <div style="
+                font-size:34px;
+                font-weight:800;
+                color:{color};">
+
+                {escape(str(value))}
+
+            </div>
+
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+# ==========================================================
+# INFO CARD
+# ==========================================================
+
+def render_info_card(
+    title: str,
+    body: str,
+    variant: str = "info",
+):
+    """Display information cards."""
+
+    cls = {
+        "info": "info-card",
+        "success": "success-card",
+        "warning": "warning-card",
+        "danger": "danger-card",
+    }.get(variant, "info-card")
+
+    st.markdown(
+        f"""
+        <div class="{cls}">
+
+            <h4 style="margin-top:0;">
+                {escape(title)}
+            </h4>
+
+            <div style="
+                color:{SUBTEXT};
+                line-height:1.7;">
+
+                {body}
+
+            </div>
+
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+# ==========================================================
+# TOPIC CHIP
+# ==========================================================
+
+def render_topic_chip(topic: str):
+    """Return a pill-shaped topic badge."""
+
+    return f"""
+    <span class="topic-chip">
+        📘 {escape(topic)}
+    </span>
+    """
+
+
+# ==========================================================
+# TURN DOTS
+# ==========================================================
+
+def render_turn_dots(turn: int, total: int = 4):
+    """Progress dots."""
+
+    cols = st.columns(total)
+
+    for i, col in enumerate(cols, start=1):
+
+        if i <= turn:
+            color = PRIMARY
+        else:
+            color = BORDER
+
+        with col:
+
+            st.markdown(
+                f"""
+                <div style="
+                    width:18px;
+                    height:18px;
+                    margin:auto;
+                    border-radius:50%;
+                    background:{color};
+                ">
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+
+
+# ==========================================================
+# CHAT CARD
+# ==========================================================
+
+def render_chat_card(role: str, message: str):
+    """
+    Beautiful chat bubble.
+
+    role:
+        "user"
+        "assistant"
+    """
+
+    if role == "user":
+
+        cls = "chat-user"
+        avatar = "🧑‍🎓"
+        name = "You"
+
     else:
-        return PEN_RED
 
+        cls = "chat-ai"
+        avatar = "🤔"
+        name = "Alex"
 
-def render_score_badge(score: int, label: str) -> None:
-    """Hand-drawn chalk-circle score badge — the app's signature element."""
-    color = _score_color(score)
     st.markdown(
         f"""
-        <div class="chalk-score-wrap">
-            <svg class="chalk-score-svg" viewBox="0 0 100 100">
-                <path d="{_CHALK_CIRCLE_PATH}" fill="none" stroke="{color}" stroke-width="4" />
-                <text x="50" y="57" text-anchor="middle"
-                      font-family="IBM Plex Mono, monospace" font-size="26"
-                      font-weight="600" fill="{color}">{score}</text>
-            </svg>
-            <div>
-                <div class="chalk-score-num" style="color:{color};">{score}/10</div>
-                <div class="chalk-score-label">{label}</div>
+        <div class="{cls}">
+
+            <div style="
+                font-weight:700;
+                margin-bottom:10px;">
+
+                {avatar} {name}
+
             </div>
+
+            <div style="
+                line-height:1.8;
+                color:{TEXT};">
+
+                {escape(message)}
+
+            </div>
+
         </div>
         """,
         unsafe_allow_html=True,
     )
 
 
-def render_misconception_block(misconception: str, correction: str | None = None) -> None:
-    """Red-pen annotated misconception, with an optional teal correction below."""
+# ==========================================================
+# SECTION TITLE
+# ==========================================================
+
+def render_section(title: str):
     st.markdown(
         f"""
-        <div class="misconception-block">
-            <div class="label">✗ Misconception found</div>
-            <div class="text">{misconception}</div>
+        <h2 style="
+            margin-top:30px;
+            margin-bottom:18px;
+            font-size:28px;
+            font-weight:700;">
+            {escape(title)}
+        </h2>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+# ==========================================================
+# HORIZONTAL DIVIDER
+# ==========================================================
+
+def render_divider():
+    st.markdown("<hr>", unsafe_allow_html=True)
+
+# ==========================================================
+# SCORE BADGE
+# ==========================================================
+
+def render_score_badge(score: int | float, label: str = ""):
+    """Render a clarity score badge."""
+
+    score = max(0, min(10, int(score)))
+
+    if score >= 8:
+        cls = "score-good"
+    elif score >= 5:
+        cls = "score-mid"
+    else:
+        cls = "score-bad"
+
+    st.markdown(
+        f"""
+        <div class="card" style="text-align:center;">
+
+            <div style="
+                font-size:15px;
+                color:{SUBTEXT};
+                margin-bottom:15px;">
+                Clarity Score
+            </div>
+
+            <div class="{cls}" style="
+                width:110px;
+                height:110px;
+                border-radius:50%;
+                margin:auto;
+                display:flex;
+                align-items:center;
+                justify-content:center;
+                font-size:34px;
+                font-weight:800;
+                color:white;
+            ">
+                {score}/10
+            </div>
+
+            <div style="
+                margin-top:18px;
+                font-weight:600;
+                color:{TEXT};">
+                {escape(label)}
+            </div>
+
         </div>
         """,
         unsafe_allow_html=True,
     )
+
+
+# ==========================================================
+# MISCONCEPTION BLOCK
+# ==========================================================
+
+def render_misconception_block(
+    misconception: str,
+    correction: str | None = None,
+):
+    """Display misconception and correction."""
+
+    correction_html = ""
+
     if correction:
-        st.markdown(
-            f"""
-            <div class="correction-block">
-                <div class="label">✓ Correct explanation</div>
-                <div class="text">{correction}</div>
+        correction_html = f"""
+        <div style="
+            margin-top:18px;
+            padding-top:18px;
+            border-top:1px solid {BORDER};
+        ">
+
+            <div style="
+                color:{SUCCESS};
+                font-weight:700;
+                margin-bottom:8px;">
+                ✅ Correct Explanation
             </div>
-            """,
-            unsafe_allow_html=True,
-        )
 
+            <div style="
+                color:{TEXT};
+                line-height:1.7;">
+                {escape(correction)}
+            </div>
 
-def render_turn_dots(current: int, total: int) -> None:
-    """Small row of filled/empty dots showing conversation progress."""
-    dots = "".join(
-        f'<div class="turn-dot{" filled" if i < current else ""}"></div>'
-        for i in range(total)
-    )
-    st.markdown(f'<div class="turn-dots">{dots}</div>', unsafe_allow_html=True)
+        </div>
+        """
 
-
-def render_topic_chip(topic: str) -> str:
-    """Return an inline HTML chip for a topic — embed inside other markdown."""
-    return f'<span class="topic-chip">{topic}</span>'
-
-
-def render_hero(tagline: str, title: str, subtitle: str) -> None:
     st.markdown(
         f"""
-        <div class="chalk-hero">
-            <div class="tagline">{tagline}</div>
-            <h1>{title}</h1>
-            <p>{subtitle}</p>
+        <div class="danger-card">
+
+            <div style="
+                color:{DANGER};
+                font-size:18px;
+                font-weight:700;
+                margin-bottom:10px;">
+
+                ❌ Misconception
+
+            </div>
+
+            <div style="
+                color:{TEXT};
+                line-height:1.7;">
+
+                {escape(misconception)}
+
+            </div>
+
+            {correction_html}
+
         </div>
         """,
         unsafe_allow_html=True,
     )
+
+
+# ==========================================================
+# STATUS BADGE
+# ==========================================================
+
+def render_status_badge(text: str, color: str = PRIMARY):
+    st.markdown(
+        f"""
+        <span style="
+            display:inline-block;
+            background:{color};
+            color:white;
+            padding:6px 14px;
+            border-radius:999px;
+            font-size:13px;
+            font-weight:600;
+            margin:4px 0;">
+            {escape(text)}
+        </span>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+# ==========================================================
+# EMPTY STATE
+# ==========================================================
+
+def render_empty_state(title: str, body: str):
+    st.markdown(
+        f"""
+        <div class="card" style="text-align:center;padding:40px;">
+
+            <div style="font-size:46px;margin-bottom:12px;">
+                📭
+            </div>
+
+            <h3 style="margin-bottom:10px;">
+                {escape(title)}
+            </h3>
+
+            <p style="
+                color:{SUBTEXT};
+                max-width:500px;
+                margin:auto;">
+                {escape(body)}
+            </p>
+
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+# ==========================================================
+# FOOTER
+# ==========================================================
+
+def render_footer():
+    st.markdown(
+        f"""
+        <div class="footer">
+
+            <hr>
+
+            <div style="
+                font-size:22px;
+                font-weight:700;
+                margin-bottom:10px;">
+
+                🎓 Reverse Tutor AI
+
+            </div>
+
+            <div style="
+                color:{SUBTEXT};
+                margin-bottom:18px;">
+
+                Teach • Explain • Discover • Improve
+
+            </div>
+
+            <div style="
+                display:flex;
+                justify-content:center;
+                gap:10px;
+                flex-wrap:wrap;">
+
+                <span class="topic-chip">🤖 Gemini</span>
+                <span class="topic-chip">🗄 SQLite</span>
+                <span class="topic-chip">⚡ Streamlit</span>
+                <span class="topic-chip">🧠 AI Learning</span>
+
+            </div>
+
+            <div style="
+                margin-top:22px;
+                color:{SUBTEXT};
+                font-size:13px;">
+
+                Built for active learning using the Feynman Technique.
+
+            </div>
+
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+# ==========================================================
+# COMPATIBILITY HELPERS
+# ==========================================================
+
+def render_hero(title: str, subtitle: str = "", icon: str = "🎓"):
+    """Backward-compatible wrapper."""
+    render_page_header(title, subtitle, icon)
+
+
+def render_status_card(title: str, body: str, variant: str = "info"):
+    """Backward-compatible wrapper."""
+    render_info_card(title, body, variant)
+
+
+# ==========================================================
+# EXPORTS
+# ==========================================================
+
+__all__ = [
+    "inject_base_css",
+    "render_page_header",
+    "render_metric_card",
+    "render_info_card",
+    "render_status_card",
+    "render_topic_chip",
+    "render_turn_dots",
+    "render_chat_card",
+    "render_score_badge",
+    "render_misconception_block",
+    "render_status_badge",
+    "render_empty_state",
+    "render_footer",
+    "render_section",
+    "render_divider",
+    "render_hero",
+]
