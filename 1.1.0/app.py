@@ -3,7 +3,6 @@ from dotenv import load_dotenv
 import streamlit as st
 
 from core.db import init_db
-from core.voice import VOICE_INPUT_ENABLED, VOICE_OUTPUT_ENABLED
 
 load_dotenv()
 
@@ -389,15 +388,6 @@ with st.sidebar:
     else:
         st.error("Gemini Missing")
 
-    if VOICE_INPUT_ENABLED:
-        st.success("Voice Input")
-    else:
-        st.warning("Voice Input Disabled")
-
-    if VOICE_OUTPUT_ENABLED:
-        st.success("Voice Output")
-    else:
-        st.warning("Voice Output Disabled")
 
 # ---------------------------------------------------
 # Hero
