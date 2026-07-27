@@ -1,20 +1,28 @@
 """
-app.py — Main entry point for Reverse Tutor AI.
-
-This file:
-- Configures the Streamlit page
-- Loads environment variables from .env
-- Initialises the SQLite database on first load
-- Displays the welcome/home screen
+app.py
+Reverse Tutor AI
 """
 
 import os
-import streamlit as st
 from dotenv import load_dotenv
+import streamlit as st
 
-# ---------------------------------------------------------------------------
-# Page configuration — must be the very first Streamlit call
-# ---------------------------------------------------------------------------
+load_dotenv()
+
+from core.db import init_db
+from core.ui import (
+    inject_base_css,
+    render_sidebar,
+    render_page_header,
+    render_metric_card,
+    render_info_card,
+    render_footer,
+)
+
+# ==========================================================
+# PAGE CONFIG
+# ==========================================================
+
 st.set_page_config(
     page_title="Reverse Tutor AI",
     page_icon="🎓",
@@ -22,115 +30,310 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# ---------------------------------------------------------------------------
-# Load environment variables
-# ---------------------------------------------------------------------------
-load_dotenv()  # Reads from .env in the project root
+inject_base_css()
 
-# ---------------------------------------------------------------------------
-# Database initialisation (once per session)
-# ---------------------------------------------------------------------------
+# ==========================================================
+# INITIALIZE DATABASE
+# ==========================================================
+
 if "db_initialized" not in st.session_state:
-    try:
-        from core.db import init_db
-        init_db()
-        st.session_state["db_initialized"] = True
-    except Exception as e:
-        st.error(f"⚠️ Database initialisation failed: {e}")
-        st.session_state["db_initialized"] = False
+    init_db()
+    st.session_state.db_initialized = True
 
-# ---------------------------------------------------------------------------
-# API key check (non-fatal warning)
-# ---------------------------------------------------------------------------
-api_key = os.environ.get("GEMINI_API_KEY", "").strip()
-if not api_key:
-    st.warning(
-        "🔑 **GEMINI_API_KEY is not set.** AI features (Explain Mode and Error Hunt Mode) "
-        "won't work until you:\n"
-        "1. Copy `.env.example` → `.env`\n"
-        "2. Paste your free Gemini API key from [Google AI Studio](https://aistudio.google.com)\n"
-        "3. Restart the Streamlit app\n\n"
-        "The Dashboard and Misconception Library work without a key.",
-        icon="⚠️",
-    )
+# ==========================================================
+# SIDEBAR
+# ==========================================================
 
-# ---------------------------------------------------------------------------
-# Home page content
-# ---------------------------------------------------------------------------
-st.title("🎓 Reverse Tutor AI")
-st.markdown(
-    """
-    > *"The best way to learn is to teach."* — Richard Feynman
+render_sidebar()
 
-    **Reverse Tutor AI** flips the classroom. Instead of an AI explaining things *to* you,
-    *you* explain the concept to the AI — which plays a **curious, confused peer student**
-    who asks pointed follow-up questions that expose exactly where your understanding breaks down.
+# ==========================================================
+# HERO
+# ==========================================================
 
-    After a short conversation, you get a **diagnostic report** with a clarity score (1–10)
-    and a precise breakdown of your misconceptions.
-
-    This is the **Feynman Technique**, made rigorous and data-driven.
-    """
+render_page_header(
+    title="Reverse Tutor AI",
+    subtitle=(
+        "Learn by teaching. Explain concepts to Alex, "
+        "receive probing questions, uncover misconceptions, "
+        "and master topics through active learning."
+    ),
+    icon="🎓",
 )
 
-st.divider()
+# ==========================================================
+# QUICK STATS
+# ==========================================================
 
-# Mode overview cards
+st.markdown("## Platform")
+
 col1, col2, col3, col4 = st.columns(4)
 
 with col1:
-    st.markdown("### 🗣️ Explain Mode")
-    st.markdown(
-        "You explain a concept. The AI plays a confused peer who asks one "
-        "probing question per turn. Get a diagnostic report after 4 turns."
+    render_metric_card(
+        "Learning Modes",
+        "4",
     )
-    if st.button("Go to Explain Mode →", key="home_explain"):
-        st.switch_page("pages/1_Explain_Mode.py")
 
 with col2:
-    st.markdown("### 🔍 Error Hunt Mode")
-    st.markdown(
-        "The AI writes a subtly wrong explanation. You find the planted "
-        "factual error. Great for sharpening critical reading skills."
+    render_metric_card(
+        "AI Engine",
+        "Gemini",
     )
-    if st.button("Go to Error Hunt →", key="home_error"):
-        st.switch_page("pages/2_Error_Hunt_Mode.py")
 
 with col3:
-    st.markdown("### 📊 Dashboard")
-    st.markdown(
-        "See all your past sessions. Track clarity scores over time. "
-        "Spot your recurring weak concepts and revisit them."
+    render_metric_card(
+        "Database",
+        "SQLite",
     )
-    if st.button("Go to Dashboard →", key="home_dashboard"):
-        st.switch_page("pages/3_Dashboard.py")
 
 with col4:
-    st.markdown("### 📚 Misconception Library")
-    st.markdown(
-        "Browse a curated list of common misconceptions by topic. "
-        "Understand exactly where students typically go wrong."
+    render_metric_card(
+        "Framework",
+        "Streamlit",
     )
-    if st.button("Go to Library →", key="home_library"):
-        st.switch_page("pages/4_Misconception_Library.py")
 
 st.divider()
-st.caption(
-    "Built with Google Gemini free tier · SQLite · Streamlit · "
-    "SpeechRecognition · pyttsx3 — 100% free, no credit card required."
+
+# ==========================================================
+# LEARNING MODES
+# ==========================================================
+
+render_page_header(
+    title="Choose Your Learning Mode",
+    subtitle="Each mode targets a different aspect of understanding.",
 )
 
-# ---------------------------------------------------------------------------
-# Sidebar navigation hint
-# ---------------------------------------------------------------------------
-with st.sidebar:
-    st.markdown("## 🎓 Reverse Tutor AI")
-    st.markdown(
-        "Use the pages above in the sidebar to navigate between modes.\n\n"
-        "**Free stack only** — Gemini free tier, SQLite, offline voice."
+mode1, mode2 = st.columns(2)
+mode3, mode4 = st.columns(2)
+
+with mode1:
+
+    render_info_card(
+        "🧠 Explain Mode",
+        """
+Teach Alex as if you're explaining to a friend.
+
+• AI asks probing questions
+• Detects misconceptions
+• Gives clarity score
+• Personalized diagnostic report
+
+**Best for:** Deep understanding
+        """,
+        "info",
     )
-    st.divider()
-    if api_key:
-        st.success("✅ Gemini API key loaded")
-    else:
-        st.error("❌ No API key — add to .env")
+
+    if st.button(
+        "Open Explain Mode",
+        key="home_explain",
+        use_container_width=True,
+    ):
+        st.switch_page("pages/1_Explain_Mode.py")
+
+with mode2:
+
+    render_info_card(
+        "🔍 Error Hunt",
+        """
+Read an explanation containing
+one hidden factual mistake.
+
+• Spot the planted error
+• Test conceptual accuracy
+• Strengthen critical thinking
+
+**Best for:** Revision
+        """,
+        "warning",
+    )
+
+    if st.button(
+        "Open Error Hunt",
+        key="home_error",
+        use_container_width=True,
+    ):
+        st.switch_page("pages/2_Error_Hunt_Mode.py")
+
+with mode3:
+
+    render_info_card(
+        "📊 Dashboard",
+        """
+Track your learning journey.
+
+• Previous sessions
+• Calibration graph
+• Weak concepts
+• Learning trends
+
+**Best for:** Progress tracking
+        """,
+        "success",
+    )
+
+    if st.button(
+        "Open Dashboard",
+        key="home_dashboard",
+        use_container_width=True,
+    ):
+        st.switch_page("pages/3_Dashboard.py")
+
+with mode4:
+
+    render_info_card(
+        "📚 Misconception Library",
+        """
+Browse common misconceptions
+across different topics.
+
+• Frequent mistakes
+• Correct explanations
+• Faster revision
+
+**Best for:** Quick review
+        """,
+        "info",
+    )
+
+st.divider()
+
+# ==========================================================
+# WHY REVERSE TUTOR AI
+# ==========================================================
+
+render_page_header(
+    title="Why Reverse Tutor AI?",
+    subtitle="Learning science powered by active recall.",
+)
+
+left, right = st.columns([2, 1])
+
+with left:
+
+    st.markdown(
+        """
+### Traditional Learning
+
+- Passive reading
+- Memorizing definitions
+- False confidence
+- Easy to forget concepts
+
+---
+
+### Reverse Tutor AI
+
+- Learn by teaching
+- AI challenges your understanding
+- Finds misconceptions
+- Gives personalized feedback
+- Improves long-term retention
+"""
+    )
+
+with right:
+
+    render_info_card(
+        "🧠 Active Recall",
+        "Teaching strengthens memory and conceptual understanding.",
+        "success",
+    )
+
+    render_info_card(
+        "🎯 Personalized Feedback",
+        "Every session generates targeted suggestions.",
+        "info",
+    )
+
+    render_info_card(
+        "📈 Track Progress",
+        "Visualize improvement over multiple sessions.",
+        "warning",
+    )
+
+st.divider()
+
+# ==========================================================
+# TECHNOLOGY STACK
+# ==========================================================
+
+render_page_header(
+    title="Technology Stack",
+    subtitle="Built using modern AI and web technologies.",
+)
+
+tech1, tech2, tech3, tech4 = st.columns(4)
+
+with tech1:
+    render_metric_card(
+        "LLM",
+        "Gemini 2.x",
+        color="#4285F4",
+    )
+
+with tech2:
+    render_metric_card(
+        "Backend",
+        "Python",
+        color="#3776AB",
+    )
+
+with tech3:
+    render_metric_card(
+        "Database",
+        "SQLite",
+        color="#16A34A",
+    )
+
+with tech4:
+    render_metric_card(
+        "Frontend",
+        "Streamlit",
+        color="#FF4B4B",
+    )
+
+st.divider()
+
+# ==========================================================
+# GET STARTED
+# ==========================================================
+
+render_page_header(
+    title="Ready to Test Your Understanding?",
+    subtitle=(
+        "Start with Explain Mode and let Alex challenge your "
+        "knowledge through guided questioning."
+    ),
+)
+
+cta1, cta2, cta3 = st.columns(3)
+
+with cta1:
+    if st.button(
+        "🧠 Start Explain Mode",
+        use_container_width=True,
+        type="primary",
+    ):
+        st.switch_page("pages/1_Explain_Mode.py")
+
+with cta2:
+    if st.button(
+        "🔍 Try Error Hunt",
+        use_container_width=True,
+    ):
+        st.switch_page("pages/2_Error_Hunt_Mode.py")
+
+with cta3:
+    if st.button(
+        "📊 View Dashboard",
+        use_container_width=True,
+    ):
+        st.switch_page("pages/3_Dashboard.py")
+
+st.divider()
+
+# ==========================================================
+# FOOTER
+# ==========================================================
+
+render_footer()
