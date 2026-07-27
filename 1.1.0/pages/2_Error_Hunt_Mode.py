@@ -1,160 +1,478 @@
 """
-pages/2_Error_Hunt_Mode.py — Error Hunt Mode for Reverse Tutor AI.
- 
-The AI generates a 3-5 sentence explanation of a topic with exactly one
-planted factual error. The student reads it and guesses what's wrong.
-The AI then reveals whether they found the real error, what it was, and the
-correct version of the fact.
+pages/2_Error_Hunt_Mode.py
+Reverse Tutor AI
 """
- 
+
 import streamlit as st
 from dotenv import load_dotenv
- 
+
 load_dotenv()
- 
+
 st.set_page_config(
-    page_title="Error Hunt Mode — Reverse Tutor AI",
+    page_title="Error Hunt",
     page_icon="🔍",
     layout="wide",
 )
- 
-from core.ui import inject_base_css, render_misconception_block, render_topic_chip
- 
-inject_base_css()
- 
-from core import ai_engine
- 
-# ---------------------------------------------------------------------------
-# Session state defaults
-# ---------------------------------------------------------------------------
- 
-if "eh_topic" not in st.session_state:
-    st.session_state["eh_topic"] = ""
-if "eh_explanation" not in st.session_state:
-    st.session_state["eh_explanation"] = None
-if "eh_result" not in st.session_state:
-    st.session_state["eh_result"] = None
-if "eh_guess" not in st.session_state:
-    st.session_state["eh_guess"] = ""
- 
-# ---------------------------------------------------------------------------
-# Page header
-# ---------------------------------------------------------------------------
-st.markdown('<div style="font-family:\'IBM Plex Mono\',monospace;color:var(--chalk-yellow);font-size:0.8rem;letter-spacing:2px;text-transform:uppercase;">Error Hunt Mode</div>', unsafe_allow_html=True)
-st.title("🔍 Spot the mistake")
-st.markdown(
-    "Alex writes a **subtly wrong explanation** with one planted factual error. "
-    "Your job: spot the mistake. Great for sharpening critical thinking."
+
+# ==========================================================
+# IMPORTS
+# ==========================================================
+
+from core.ui import (
+    inject_base_css,
+    render_sidebar,
+    render_page_header,
+    render_metric_card,
+    render_info_card,
+    render_status_card,
+    render_topic_chip,
+    render_turn_dots,
+    render_chat_card,
+    render_status_badge,
+    render_section,
+    render_divider,
+    render_hero,
+    render_score_badge,
+    render_misconception_block,
+    render_topic_chip,
+    render_footer,
 )
+
+from core import ai_engine
+
+inject_base_css()
+
+render_sidebar()
+
+# ==========================================================
+# SESSION DEFAULTS
+# ==========================================================
+
+DEFAULTS = {
+
+    "eh_topic": "",
+
+    "eh_explanation": None,
+
+    "eh_result": None,
+
+    "eh_guess": "",
+
+}
+
+for key, value in DEFAULTS.items():
+
+    if key not in st.session_state:
+
+        st.session_state[key] = value
+
+# ==========================================================
+# HEADER
+# ==========================================================
+
+render_page_header(
+
+    title="Error Hunt",
+
+    subtitle=(
+        "Read Alex's explanation carefully. "
+        "Exactly one factual mistake has been planted. "
+        "Can you find it?"
+    ),
+
+    icon="🔍",
+
+)
+
+render_info_card(
+
+    "Challenge",
+
+    """
+Alex intentionally makes one subtle conceptual mistake.
+
+Your goal is not to correct grammar or wording.
+
+Find the single incorrect fact.
+""",
+
+    "warning",
+
+)
+
 st.divider()
- 
-# ---------------------------------------------------------------------------
-# Topic input — any subject, not limited to a preset list
-# ---------------------------------------------------------------------------
-col_left, col_right = st.columns([2, 1])
- 
-with col_left:
-    selected_topic = st.text_input(
-        "📖 What topic should Alex write about?",
+
+# ==========================================================
+# TOPIC SELECTION
+# ==========================================================
+
+left, right = st.columns(
+    [2,1],
+    gap="large",
+)
+
+with left:
+
+    render_info_card(
+
+        "Choose a Topic",
+
+        "Enter any topic to generate a flawed explanation.",
+
+        "success",
+
+    )
+
+    topic = st.text_input(
+
+        "Topic",
+
         value=st.session_state["eh_topic"],
-        placeholder="e.g. Photosynthesis, the French Revolution, Big-O notation, offside rule in football…",
-        key="eh_topic_input",
+
+        placeholder="Binary Search, Photosynthesis, TCP/IP...",
+
     ).strip()
- 
-    # If topic changed, clear the old explanation
-    if selected_topic != st.session_state["eh_topic"]:
-        st.session_state["eh_topic"] = selected_topic
+
+    if topic != st.session_state["eh_topic"]:
+
+        st.session_state["eh_topic"] = topic
+
         st.session_state["eh_explanation"] = None
+
         st.session_state["eh_result"] = None
+
         st.session_state["eh_guess"] = ""
- 
-    # Generate button
-    if st.button("⚡ Generate a flawed explanation", type="primary", key="eh_generate"):
-        if not selected_topic:
-            st.error("Please enter a topic before generating an explanation.")
+
+    st.write("")
+
+    generate = st.button(
+
+        "⚡ Generate Challenge",
+
+        type="primary",
+
+        use_container_width=True,
+
+    )
+
+    if generate:
+
+        if not topic:
+
+            st.error(
+                "Please enter a topic."
+            )
+
         else:
-            with st.spinner("Generating a flawed explanation…"):
-                explanation = ai_engine.generate_flawed_explanation(selected_topic)
-            st.session_state["eh_explanation"] = explanation
+
+            with st.spinner(
+                "Alex is preparing your challenge..."
+            ):
+
+                explanation = (
+                    ai_engine.generate_flawed_explanation(
+                        topic
+                    )
+                )
+
+            st.session_state[
+                "eh_explanation"
+            ] = explanation
+
+            st.session_state[
+                "eh_result"
+            ] = None
+
+            st.session_state[
+                "eh_guess"
+            ] = ""
+
+            st.rerun()
+
+with right:
+
+    render_info_card(
+
+        "📋 Rules",
+
+        """
+• Exactly one mistake
+
+• No grammar tricks
+
+• Read every sentence
+
+• Think conceptually
+
+• Explain WHY it is wrong
+""",
+
+        "info",
+
+    )
+
+    render_info_card(
+
+        "💡 Tip",
+
+        """
+If something feels slightly incorrect,
+it probably is.
+
+Question every fact.
+""",
+
+        "success",
+
+    )
+
+st.divider()
+# ==========================================================
+# EXPLANATION CARD
+# ==========================================================
+
+if st.session_state["eh_explanation"]:
+
+    render_page_header(
+        title="Find the Mistake",
+        subtitle="Read carefully before making your guess.",
+        icon="📄",
+    )
+
+    render_metric_card(
+        "Current Topic",
+        st.session_state["eh_topic"],
+    )
+
+    st.write("")
+
+    render_info_card(
+        "Alex's Explanation",
+        st.session_state["eh_explanation"],
+        "info",
+    )
+
+    st.divider()
+
+    # ======================================================
+    # GUESS SECTION
+    # ======================================================
+
+    if st.session_state["eh_result"] is None:
+
+        render_page_header(
+            title="Your Answer",
+            subtitle="Explain which statement is incorrect and why.",
+            icon="🎯",
+        )
+
+        guess = st.text_area(
+            "What is the mistake?",
+            value=st.session_state["eh_guess"],
+            height=180,
+            placeholder="""
+Example:
+
+The explanation says Binary Search works on unsorted arrays.
+
+Binary Search actually requires the array to be sorted because...
+""",
+        )
+
+        st.session_state["eh_guess"] = guess
+
+        c1, c2 = st.columns([5, 1])
+
+        with c2:
+
+            reveal = st.button(
+                "Reveal",
+                type="primary",
+                use_container_width=True,
+            )
+
+        if reveal:
+
+            if not guess.strip():
+
+                st.warning(
+                    "Please enter your answer first."
+                )
+
+            else:
+
+                with st.spinner(
+                    "Checking your answer..."
+                ):
+
+                    result = (
+                        ai_engine.reveal_error_hunt_result(
+                            flawed_explanation=st.session_state[
+                                "eh_explanation"
+                            ],
+                            student_guess=guess.strip(),
+                        )
+                    )
+
+                st.session_state[
+                    "eh_result"
+                ] = result
+
+                st.rerun()
+# ==========================================================
+# RESULT
+# ==========================================================
+
+if st.session_state["eh_result"] is not None:
+
+    result = st.session_state["eh_result"]
+
+    st.divider()
+
+    render_page_header(
+        title="Challenge Result",
+        subtitle="Let's see how well you spotted the hidden mistake.",
+        icon="📊",
+    )
+
+    score_col, detail_col = st.columns([1, 2], gap="large")
+
+    # ------------------------------------------------------
+    # LEFT PANEL
+    # ------------------------------------------------------
+
+    with score_col:
+
+        if result.get("correct"):
+
+            render_info_card(
+                "🎉 Excellent!",
+                "You correctly identified the planted misconception.",
+                "success",
+            )
+
+            render_metric_card(
+                "Result",
+                "Correct ✅",
+            )
+
+        else:
+
+            render_info_card(
+                "❌ Not Quite",
+                "Your answer didn't match the planted misconception.",
+                "danger",
+            )
+
+            render_metric_card(
+                "Result",
+                "Incorrect",
+            )
+
+        render_metric_card(
+            "Topic",
+            st.session_state["eh_topic"],
+        )
+
+    # ------------------------------------------------------
+    # RIGHT PANEL
+    # ------------------------------------------------------
+
+    with detail_col:
+
+        st.subheader("📝 AI Feedback")
+
+        render_misconception_block(
+
+            misconception=result.get(
+                "actual_error",
+                "Unknown"
+            ),
+
+            correction=result.get(
+                "explanation",
+                "No explanation available."
+            ),
+
+        )
+
+        if result.get("correct"):
+
+            render_info_card(
+
+                "Why this is good",
+
+                """
+You noticed the exact conceptual mistake.
+
+This means you weren't simply reading —
+you were actively verifying every statement.
+""",
+
+                "success",
+
+            )
+
+        else:
+
+            render_info_card(
+
+                "Learning Tip",
+
+                """
+Try reading each sentence independently.
+
+Ask yourself:
+
+• Is this always true?
+
+• Would I teach this to someone else?
+
+• Does this contradict something I already know?
+""",
+
+                "warning",
+
+            )
+
+    st.divider()
+
+    # ======================================================
+    # ACTION BUTTONS
+    # ======================================================
+
+    c1, c2 = st.columns(2)
+
+    with c1:
+
+        if st.button(
+            "🔄 Try Another Topic",
+            use_container_width=True,
+        ):
+
+            st.session_state["eh_explanation"] = None
             st.session_state["eh_result"] = None
             st.session_state["eh_guess"] = ""
+
             st.rerun()
- 
-with col_right:
-    st.info(
-        "**Tips for error hunting:**\n\n"
-        "- Read every sentence carefully\n"
-        "- Think about the facts you're sure of\n"
-        "- The error sounds plausible but is factually wrong\n"
-        "- It won't be a typo or grammar mistake"
-    )
- 
-# ---------------------------------------------------------------------------
-# Show the flawed explanation (if generated)
-# ---------------------------------------------------------------------------
-if st.session_state["eh_explanation"]:
-    st.divider()
-    st.markdown(
-        f"**Explanation:** {render_topic_chip(st.session_state['eh_topic'])}",
-        unsafe_allow_html=True,
-    )
-    st.markdown(
-        f"""
-        <div style="background: var(--bg-panel); border: 2px dashed rgba(168,191,176,0.4);
-                    border-radius: 12px; padding: 1.2rem 1.4rem; margin-top: 0.6rem;
-                    color: var(--chalk-white); font-size: 1.02rem; line-height: 1.6;">
-            {st.session_state['eh_explanation']}
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
- 
-    # Only show the guess input if we haven't revealed yet
-    if st.session_state["eh_result"] is None:
-        st.divider()
-        guess = st.text_area(
-            "🎯 What do you think is wrong with this explanation?",
-            value=st.session_state["eh_guess"],
-            height=100,
-            placeholder="Describe the error you spotted…",
-            key="eh_guess_input",
-        )
-        st.session_state["eh_guess"] = guess
- 
-        if st.button("🔎 Reveal the answer", type="primary", key="eh_reveal"):
-            if not guess.strip():
-                st.warning("Please enter your guess before revealing.")
-            else:
-                with st.spinner("Evaluating your guess…"):
-                    result = ai_engine.reveal_error_hunt_result(
-                        flawed_explanation=st.session_state["eh_explanation"],
-                        student_guess=guess.strip(),
-                    )
-                st.session_state["eh_result"] = result
-                st.rerun()
- 
-# ---------------------------------------------------------------------------
-# Show the result card (if revealed)
-# ---------------------------------------------------------------------------
-if st.session_state["eh_result"] is not None:
-    result = st.session_state["eh_result"]
-    st.divider()
-    st.subheader("📊 Result")
- 
-    if result.get("correct"):
-        st.success("🎉 **Correct!** You found the real error!")
-    else:
-        st.error("❌ **Not quite.** That wasn't the main planted error.")
- 
-    render_misconception_block(
-        misconception=result.get("actual_error", "Unknown"),
-        correction=result.get("explanation", "Unknown"),
-    )
- 
-    st.divider()
-    if st.button("🔄 Try another topic", key="eh_reset"):
-        st.session_state["eh_explanation"] = None
-        st.session_state["eh_result"] = None
-        st.session_state["eh_guess"] = ""
-        st.rerun()
- 
+
+    with c2:
+
+        if st.button(
+            "🏠 Back to Home",
+            use_container_width=True,
+        ):
+
+            st.session_state["eh_explanation"] = None
+            st.session_state["eh_result"] = None
+            st.session_state["eh_guess"] = ""
+
+            st.switch_page("app.py")
+
+# ==========================================================
+# FOOTER
+# ==========================================================
+
+st.divider()
+
+render_footer()
