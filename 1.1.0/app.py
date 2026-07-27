@@ -64,7 +64,7 @@ render_page_header(
 # QUICK STATS
 # ==========================================================
 
-col1 = st.columns(1)
+col1 = st.columns(1)[0]
 
 with col1:
     render_metric_card(
