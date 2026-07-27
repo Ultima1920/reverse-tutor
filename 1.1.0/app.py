@@ -64,34 +64,14 @@ render_page_header(
 # QUICK STATS
 # ==========================================================
 
-st.markdown("## Platform")
-
-col1, col2, col3, col4 = st.columns(4)
+col1 = st.columns(1)
 
 with col1:
     render_metric_card(
         "Learning Modes",
-        "4",
+        "2",
     )
-
-with col2:
-    render_metric_card(
-        "AI Engine",
-        "Gemini",
-    )
-
-with col3:
-    render_metric_card(
-        "Database",
-        "SQLite",
-    )
-
-with col4:
-    render_metric_card(
-        "Framework",
-        "Streamlit",
-    )
-
+    
 st.divider()
 
 # ==========================================================
@@ -257,42 +237,42 @@ st.divider()
 # TECHNOLOGY STACK
 # ==========================================================
 
-render_page_header(
-    title="Technology Stack",
-    subtitle="Built using modern AI and web technologies.",
-)
+# render_page_header(
+#     title="Technology Stack",
+#     subtitle="Built using modern AI and web technologies.",
+# )
 
-tech1, tech2, tech3, tech4 = st.columns(4)
+# tech1, tech2, tech3, tech4 = st.columns(4)
 
-with tech1:
-    render_metric_card(
-        "LLM",
-        "Gemini 2.x",
-        color="#4285F4",
-    )
+# with tech1:
+#     render_metric_card(
+#         "LLM",
+#         "Gemini 2.x",
+#         color="#4285F4",
+#     )
 
-with tech2:
-    render_metric_card(
-        "Backend",
-        "Python",
-        color="#3776AB",
-    )
+# with tech2:
+#     render_metric_card(
+#         "Backend",
+#         "Python",
+#         color="#3776AB",
+#     )
 
-with tech3:
-    render_metric_card(
-        "Database",
-        "SQLite",
-        color="#16A34A",
-    )
+# with tech3:
+#     render_metric_card(
+#         "Database",
+#         "SQLite",
+#         color="#16A34A",
+#     )
 
-with tech4:
-    render_metric_card(
-        "Frontend",
-        "Streamlit",
-        color="#FF4B4B",
-    )
+# with tech4:
+#     render_metric_card(
+#         "Frontend",
+#         "Streamlit",
+#         color="#FF4B4B",
+#     )
 
-st.divider()
+# st.divider()
 
 # ==========================================================
 # GET STARTED
