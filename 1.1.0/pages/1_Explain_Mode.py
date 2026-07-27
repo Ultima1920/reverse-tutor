@@ -21,9 +21,11 @@ st.set_page_config(
     layout="wide",
 )
 
-from core.ui import inject_base_css, render_turn_dots, render_score_badge, render_misconception_block, render_topic_chip
+from core.ui import inject_base_css, render_turn_dots, render_score_badge, render_misconception_block, render_topic_chip,render_sidebar
 
 inject_base_css()
+
+render_sidebar()
 
 from core import db, ai_engine, persona, calibration, misconceptions
 
